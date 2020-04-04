@@ -10,18 +10,19 @@
 #
 # Versions
 #    2017-01-18: Version initiale developpe avec Python 2 et testee sur Linux et Windows
+#    2020-04-04: Conversion en Python 3
 # --------------------------------------------------------------------------------------------------------------------------
 
 __author__ = "cpauliat"
 __date__ = "$Jan 18, 2017 10:27:45 AM$"
 
 # -------- Modules
-from Tkinter import * 
-from tkFont import *
+from tkinter import * 
+from tkinter.font import *
 from math import *
-import tkFileDialog
+import tkinter.filedialog
 import fileinput
-import tkMessageBox
+import tkinter.messagebox
 import time
 import platform
 import codecs
@@ -29,8 +30,7 @@ import codecs
 # -------- Constantes
 LONGUEUR_MAX=40             # longueur maximale d'un mot ou groupe de mots
 
-# -------- Plateformes supportees
-
+# -------- Emplacement des fichiers suivant l'operating system
 if (platform.system()=="Linux"):
     FOLDER_VOCA="/home/cpauliat/voca"
     FICHIER_STATS="/home/cpauliat/voca/stats.log"
@@ -38,7 +38,7 @@ elif (platform.system()=="Windows"):
     FOLDER_VOCA="C:\voca"
     FICHIER_STATS="C:\voca\stats.log"
 else:
-    print "ERREUR ! OS non supporté "
+    print("ERREUR ! OS non supporté ")
     exit (1)
     
 # ---------- class liste
@@ -196,7 +196,7 @@ class tester_voca():
         self.num_test += 1
         
         # on affiche le numero du test
-        self.label_numtest.config(text=u"Liste "+self.fichier.name+" "*20+u"Test numéro "+str(self.num_test))
+        self.label_numtest.config(text="Liste "+self.fichier.name+" "*20+"Test numéro "+str(self.num_test))
         
         # on modifie le texte en haut de la fenetre
         if (self.sens=="fr2et"):
@@ -262,7 +262,7 @@ class tester_voca():
             self.button1.config(text="Re-tester", command=self.retester)
         
         # stocker les infos (date;nom liste;sens_traduction;note/20;nb_ok/nb_erreurs;nb_questions;expressions fr;et en erreur) dans le fichier statistiques
-        ligne_stats=u""
+        ligne_stats=""
         ligne_stats+=time.strftime('%d/%m/%Y %H:%M',time.localtime())+";"+self.fichier.name+";"+self.sens+";"+str(note)+"/20"+";"+str(nb_ok)+"/"+str(self.nb_questions)
         if (nb_ok != self.nb_questions):            
             for i in range(self.liste.nb()):
@@ -281,14 +281,14 @@ class tester_voca():
     def charge_liste(self):    
         # on charge une liste depuis un fichier
         myFormats = [ ('Vocabulaire','*.voc') ]
-        self.fichier = tkFileDialog.askopenfile(parent=fenetre_principale,mode='rb',initialdir=FOLDER_VOCA,filetypes=myFormats,title='Choisis une liste de vocabulaire')        
+        self.fichier = tkinter.filedialog.askopenfile(parent=fenetre_principale,mode='rb',initialdir=FOLDER_VOCA,filetypes=myFormats,title='Choisis une liste de vocabulaire')        
         if self.fichier == None:
             return False
         
         # si le fichier ne contient aucun expression correcte
         if (self.liste.charge(self.fichier.name) == False):
             # message erreur
-            tkMessageBox.showerror(title="Erreur !", message="Erreur dans le fichier !\n\nCe fichier est corrompu !")
+            tkinter.messagebox.showerror(title="Erreur !", message="Erreur dans le fichier !\n\nCe fichier est corrompu !")
             return False
         
         # on initialise la liste des reponses OK (aucune reponse OK au debut)
@@ -340,7 +340,7 @@ class tester_voca():
         tester_frame1.pack(side="top", expand=True, fill="both") #, padx=10, pady=10)
 
         # label contenant le nom de la liste et le  numero du test        
-        self.label_numtest=Label(tester_frame1, justify=LEFT, anchor=W, width=50, bg="white", font=Font(family='Helvetica', size=24), text=u"Liste "+self.fichier.name+" "*20+u"Test numéro "+str(self.num_test))
+        self.label_numtest=Label(tester_frame1, justify=LEFT, anchor=W, width=50, bg="white", font=Font(family='Helvetica', size=24), text="Liste "+self.fichier.name+" "*20+"Test numéro "+str(self.num_test))
         self.label_numtest.pack(side="top",fill="x",padx=10,pady=10)
         
         # label du haut (pour les messages)
@@ -441,14 +441,14 @@ def supprime_espace(chaine):
     while (len(chaine)>0 and chaine[0]==" "):
         chaine=chaine[1:]
     
-    return unicode(chaine)
+    return str(chaine)
     
 def sauver_liste(text, fenetre, bt1, lab):
     
     chaine=text.get("1.0",END)
     
     liste_correcte=True
-    chaine_corrigee=u""
+    chaine_corrigee=""
     for ligne in chaine.split('\n'):
         if (supprime_espace(ligne)==""):
             continue                    # ignore lignes vides ou ne contenant que des espaces
@@ -464,18 +464,18 @@ def sauver_liste(text, fenetre, bt1, lab):
                 liste_correcte=False
                 
     if (liste_correcte == False):
-        tkMessageBox.showerror(title="Erreur !", message="Erreur dans la liste !\n\nVérifie:\n- que tu as un et un seul ; par ligne\n- que les 2 expressions ont entre 1 et "+str(LONGUEUR_MAX)+" charactères")
+        tkinter.messagebox.showerror(title="Erreur !", message="Erreur dans la liste !\n\nVérifie:\n- que tu as un et un seul ; par ligne\n- que les 2 expressions ont entre 1 et "+str(LONGUEUR_MAX)+" charactères")
         return
              
     # -- on demande le nom du fichier si besoin
     nom_fichier=lab.cget("text")
-    print "NOM_FICHIER=|"+nom_fichier+"|"
+    print("NOM_FICHIER=|"+nom_fichier+"|")
     while (nom_fichier==""):
         myFormats = [ ('vocabulaire','*.voc') ]
-        nom_fichier = tkFileDialog.asksaveasfilename(parent=fenetre_principale,initialdir=FOLDER_VOCA,filetypes=myFormats,title="Choisis un nom pour cette liste...")
+        nom_fichier = tkinter.filedialog.asksaveasfilename(parent=fenetre_principale,initialdir=FOLDER_VOCA,filetypes=myFormats,title="Choisis un nom pour cette liste...")
      
     # si le nom de fichier ne finit pas par ".voc", on rajoute ce suffixe
-    print "NOM_FICHIER initial = |"+nom_fichier+"|"
+    print("NOM_FICHIER initial = |"+nom_fichier+"|")
     if (len(nom_fichier)<4):
         nom_fichier+=".voc"
     else:
@@ -483,7 +483,7 @@ def sauver_liste(text, fenetre, bt1, lab):
         suffixe=suffixe.lower()
         if (suffixe!=".voc"):
             nom_fichier+=".voc"
-    print "NOM_FICHIER corrige = |"+nom_fichier+"|"
+    print("NOM_FICHIER corrige = |"+nom_fichier+"|")
     
     # -- on affiche le nom du fichier
     lab.config(text=nom_fichier)
@@ -493,7 +493,7 @@ def sauver_liste(text, fenetre, bt1, lab):
     fichier.write(chaine_corrigee)
     fichier.close   
     
-    print "liste sauvee !"
+    print("liste sauvee !")
     
     # -- on disable le boutons "Sauver" 
     bt1.config(state=DISABLED)   
@@ -515,7 +515,7 @@ def toplevel_editer(action):
         # D'abord, on charge une liste depuis un fichier
         myFormats = [ ('Vocabulaire','*.voc') ]
     
-        fichier = tkFileDialog.askopenfile(parent=fenetre_principale,mode='r',initialdir=FOLDER_VOCA,filetypes=myFormats,title='Choisis une liste de vocabulaire')        
+        fichier = tkinter.filedialog.askopenfile(parent=fenetre_principale,mode='r',initialdir=FOLDER_VOCA,filetypes=myFormats,title='Choisis une liste de vocabulaire')        
         if fichier == None:
             return
     
