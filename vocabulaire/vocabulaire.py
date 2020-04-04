@@ -1,4 +1,5 @@
 
+# -*- coding: utf-8 -*-
 # --------------------------------------------------------------------------------------------------------------------------
 # Ce programme permet d'entrer du vocabulaire etranger et sa traduction en francais
 # puis ensuite de tester les connaissances de l'utilisateur
@@ -38,6 +39,7 @@ elif (platform.system()=="Windows"):
     FICHIER_STATS="C:\voca\stats.log"
 else:
     print "ERREUR ! OS non supporté "
+    exit (1)
     
 # ---------- class liste
 class liste_vocabulaire:
