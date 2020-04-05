@@ -6,15 +6,18 @@
 # Ce programme utilise l'interface graphique Tkinter
 #
 # Auteur        : Christophe Pauliat
-# Platformes    : Linux / Windows
+# Platformes    : Linux / Windows / MacOS
+#
+# IMPORTANT: Pour MacOS, utiliser Python3 et tkinter depuis https://python.org car le Tcm/Tk fourni par Apple a des bugs
+#            cf. https://www.python.org/download/mac/tcltk/
 #
 # Versions
 #    2017-01-18: Version initiale developpe avec Python 2 et testee sur Linux et Windows
 #    2020-04-04: Conversion en Python 3
+#    2020-04-05: Rajout du support de MacOS
 # --------------------------------------------------------------------------------------------------------------------------
 
 __author__ = "cpauliat"
-__date__ = "$Jan 18, 2017 10:27:45 AM$"
 
 # -------- Modules
 from tkinter import * 
@@ -26,17 +29,23 @@ import tkinter.messagebox
 import time
 import platform
 import codecs
+import os
 
 # -------- Constantes
 LONGUEUR_MAX=40             # longueur maximale d'un mot ou groupe de mots
 
 # -------- Emplacement des fichiers suivant l'operating system
-if (platform.system()=="Linux"):
-    FOLDER_VOCA="/home/cpauliat/voca"
-    FICHIER_STATS="/home/cpauliat/voca/stats.log"
-elif (platform.system()=="Windows"):
-    FOLDER_VOCA="C:\voca"
-    FICHIER_STATS="C:\voca\stats.log"
+operating_system = platform.system()
+if (operating_system == "Linux"):
+    FOLDER_VOCA   = "/home/cpauliat/voca"
+    FICHIER_STATS = "/home/cpauliat/voca/stats.log"
+elif (operating_system == "Windows"):
+    FOLDER_VOCA   = "C:\voca"
+    FICHIER_STATS = "C:\voca\stats.log"
+elif (operating_system == "Darwin"):         # MacOS
+    FOLDER_VOCA   ="/Users/cpauliat/Documents/perso/personal_python/vocabulaire"
+    FICHIER_STATS ="/Users/cpauliat/Documents/perso/personal_python/vocabulaire/stats.log"
+    operating_system = "MacOS"
 else:
     print("ERREUR ! OS non supporté ")
     exit (1)
@@ -326,15 +335,15 @@ class tester_voca():
         self.nb_questions=self.liste.nb();
         
         # frame contenant 2 labels et 1 frame
-        tester_frame1=Frame(tester_fenetre, bg="white")
+        tester_frame1=Frame(tester_fenetre, bg="#E0E0E0")
         tester_frame1.pack(side="top", expand=True, fill="both") #, padx=10, pady=10)
 
-        # label contenant le nom de la liste et le  numero du test        
-        self.label_numtest=Label(tester_frame1, justify=LEFT, anchor=W, width=50, bg="white", font=Font(family='Helvetica', size=24), text="Liste "+self.fichier.name+" "*20+"Test numéro "+str(self.num_test))
+        # label contenant le nom de la liste et le  numero du test    
+        self.label_numtest=Label(tester_frame1, bg="#E0E0E0", justify=LEFT, anchor=W, width=50, font=Font(family='Helvetica', size=24), text="Liste "+os.path.basename(self.fichier.name)+" "*20+"Test numéro "+str(self.num_test))
         self.label_numtest.pack(side="top",fill="x",padx=10,pady=10)
         
         # label du haut (pour les messages)
-        self.label_haut=Label(tester_frame1, justify=LEFT, anchor=W, width=50, bg="white", font=Font(family='Helvetica'))
+        self.label_haut=Label(tester_frame1, bg="#E0E0E0", justify=LEFT, anchor=W, width=50, font=Font(family='Helvetica'))
         if (self.sens=="fr2et"):
             self.label_haut.config(text="Pour chaque expression française, entre l'expression étrangère correspondante\npuis presse Vérifier quand tu as terminé")
         else:
@@ -343,22 +352,22 @@ class tester_voca():
         self.default_fg=self.label_haut.cget("fg")            # on sauve la couleur fg par defaut
         
         # frame pour contenir un canvas + scrollbar
-        tester_sbframe=Frame(tester_frame1,bg="white")
+        tester_sbframe=Frame(tester_frame1,bg="#E0E0E0")
         tester_sbframe.pack(side="top",fill="both",expand=True,padx=10,pady=10)
                  
         # dans cette frame, on cree un scrollbar a droite
-        tester_sbsb=Scrollbar(tester_sbframe, orient=VERTICAL, bg="white")
+        tester_sbsb=Scrollbar(tester_sbframe, orient=VERTICAL, bg="#E0E0E0")
         tester_sbsb.pack(side="right",fill="y")
     
         # dans cette frame, on cree un canvas a gauche associé a ce scrollbar
-        tester_sbcanvas=Canvas(tester_sbframe,yscrollcommand=tester_sbsb.set, bg="white")
+        tester_sbcanvas=Canvas(tester_sbframe,yscrollcommand=tester_sbsb.set, bg="#E0E0E0")
         tester_sbcanvas.pack(side="left",fill="both",expand=True)
     
         # fin configuration du scrollbar
         tester_sbsb.config(command=tester_sbcanvas.yview) 
     
         # dans le canvas, on cree une frame
-        tester_framecanvas=Frame(tester_sbcanvas,bg="white")
+        tester_framecanvas=Frame(tester_sbcanvas,bg="#E0E0E0")
     
         # enfin dans cette frame, on cree un tableau de label, entry, label
         for nb in range(self.liste.nb()):
@@ -374,7 +383,7 @@ class tester_voca():
             entry.grid(sticky=N+W+E+S, column=1,row=2+nb,padx=0,pady=2)
             self.entry.append(entry)
             
-            res=Label(tester_framecanvas, justify=LEFT, bg="white", font=Font(family='Helvetica'), padx=10, width=6)
+            res=Label(tester_framecanvas, justify=LEFT, bg="#E0E0E0", font=Font(family='Helvetica'), padx=10, width=6)
             res.grid(sticky=N+W+E+S, column=2,row=2+nb,padx=10,pady=2)
             self.label_result.append(res)         
         
@@ -384,7 +393,7 @@ class tester_voca():
         tester_sbcanvas.config(scrollregion=tester_sbcanvas.bbox("all"))
         
         # ------- creation frame pour les boutons
-        tester_frame_boutons=Frame(tester_fenetre, bg="white",padx=10,pady=10)
+        tester_frame_boutons=Frame(tester_fenetre, bg="#E0E0E0",padx=10,pady=10)
         #CPA tester_frame_boutons.grid(sticky=S+E+W,column=0,row=1)
         tester_frame_boutons.pack(side="bottom",fill="x")   #, expand=True)
         tester_frame_boutons.columnconfigure(0, weight=1)
@@ -407,11 +416,7 @@ class tester_voca():
         # ajustement de la taille du canvas        
         hauteur=min(tester_framecanvas.winfo_height(),tester_framecanvas.winfo_screenheight()-tester_frame_boutons.winfo_height()-self.label_numtest.winfo_height()-self.label_haut.winfo_height()-200)
         largeur=tester_framecanvas.winfo_width()
-        tester_sbcanvas.config(width=largeur, height=hauteur)       
-        
-        
-            
-    
+        tester_sbcanvas.config(width=largeur, height=hauteur)                       
         
 # ---------- Tester 
 def toplevel_tester(sens):
@@ -523,16 +528,16 @@ def toplevel_editer(action):
     editer_fenetre.resizable(width=False, height=False)
     editer_fenetre.bind("<Destroy>",fenetre_detruite)
     
-    editer_frame=Frame(editer_fenetre, width=600, height=500)
+    editer_frame=Frame(editer_fenetre, bg="#E0E0E0", width=600, height=500)
     editer_frame.grid(sticky=N+S+E+W)
     #, column=2, row=3)
     editer_frame.columnconfigure(0, weight=1)
     editer_frame.columnconfigure(1, weight=1)        
 
-    editer_label=Label(editer_frame, justify=LEFT, anchor=W, text="Entre une liste d'expressions en français ainsi que leur traduction dans la langue étrangère de ton choix sous la forme\nexpression française 1;traduction langue étrangère 1\nexpression française 2;traduction langue étrangère 2\n...")
+    editer_label=Label(editer_frame, bg="#E0E0E0", justify=LEFT, anchor=W, text="Entre une liste d'expressions en français ainsi que leur traduction dans la langue étrangère de ton choix sous la forme\nexpression française 1;traduction langue étrangère 1\nexpression française 2;traduction langue étrangère 2\n...")
     editer_label.grid(sticky=N+W+E+S, column=0, row=0, columnspan=2, padx=10, pady=10)
     
-    editer_text=Text(editer_frame, height=20)
+    editer_text=Text(editer_frame, bg="white", height=20)
     editer_text.grid(sticky=N+W+E+S, column=0, row=1, columnspan=2, padx=10, pady=0)
     if (nom_fichier!=""):
         editer_text.delete("1.0",END)
@@ -540,7 +545,7 @@ def toplevel_editer(action):
     editer_text.update_idletasks()
 
     
-    editer_label_nomfichier=Label(editer_frame, justify=LEFT, anchor=W, text=nom_fichier)
+    editer_label_nomfichier=Label(editer_frame, bg="#E0E0E0", justify=LEFT, anchor=W, text=nom_fichier)
     editer_label_nomfichier.grid(sticky=N+W+E+S, column=0, row=2, columnspan=2, padx=10, pady=0)
     
     global editer_bouton_sauver
@@ -591,23 +596,38 @@ if __name__ == "__main__":
     my_font2=Font(family='Helvetica',size=14)
     
     # bouton Creer 
-    bt_creer=Button(frame_principale, text="CREER\nUNE LISTE", bg="#D0FFD0", activebackground="#40FF40", width=my_width, height=my_height, font=my_font, relief="flat", command=lambda: toplevel_editer("creer"))
+    if (operating_system == "MacOS"):
+        bt_creer=Button(frame_principale, text="CREER\nUNE LISTE", highlightbackground="#D0FFD0", activebackground="#40FF40", width=my_width, height=my_height, font=my_font, relief="flat", command=lambda: toplevel_editer("creer"))
+    else:
+        bt_creer=Button(frame_principale, text="CREER\nUNE LISTE", bg="#D0FFD0", activebackground="#40FF40", width=my_width, height=my_height, font=my_font, relief="flat", command=lambda: toplevel_editer("creer"))
     bt_creer.grid(row=0, column=0, padx=my_pad, pady=my_pad)
         
     # bouton Editer
-    bt_editer=Button(frame_principale, text="AFFICHER\nou MODIFIER\nUNE LISTE", bg="#FFFFD0", activebackground="#FFFF40", width=my_width, height=my_height, font=my_font, relief="flat", command=lambda: toplevel_editer("modifier"))
+    if (operating_system == "MacOS"):
+        bt_editer=Button(frame_principale, text="AFFICHER\nou MODIFIER\nUNE LISTE", highlightbackground="#FFFFD0", activebackground="#FFFF40", width=my_width, height=my_height, font=my_font, relief="flat", command=lambda: toplevel_editer("modifier"))
+    else:
+        bt_editer=Button(frame_principale, text="AFFICHER\nou MODIFIER\nUNE LISTE", bg="#FFFFD0", activebackground="#FFFF40", width=my_width, height=my_height, font=my_font, relief="flat", command=lambda: toplevel_editer("modifier"))
     bt_editer.grid(row=0, column=1, padx=my_pad, pady=my_pad)
     
     # bouton Tester
-    bt_tester=Button(frame_principale, text="TESTER\nFRANCAIS\nvers\nETRANGER", bg="#FFD0D0", activebackground="#FF4040", width=my_width, height=my_height, font=my_font, relief="flat", command=lambda: toplevel_tester("fr2et"))
+    if (operating_system == "MacOS"):
+        bt_tester=Button(frame_principale, text="TESTER\nFRANCAIS\nvers\nETRANGER", highlightbackground="#FFD0D0", activebackground="#FF4040", width=my_width, height=my_height, font=my_font, relief="flat", command=lambda: toplevel_tester("fr2et"))
+    else:
+        bt_tester=Button(frame_principale, text="TESTER\nFRANCAIS\nvers\nETRANGER", bg="#FFD0D0", activebackground="#FF4040", width=my_width, height=my_height, font=my_font, relief="flat", command=lambda: toplevel_tester("fr2et"))
     bt_tester.grid(row=1, column=0, padx=my_pad, pady=my_pad)
         
     # bouton Statistiques
-    bt_stats=Button(frame_principale, text="TESTER\nETRANGER\nvers\nFRANCAIS", bg="#D0D0FF", activebackground="#4040FF", width=my_width, height=my_height, font=my_font, relief="flat", command=lambda: toplevel_tester("et2fr"))
+    if (operating_system == "MacOS"):
+        bt_stats=Button(frame_principale, text="TESTER\nETRANGER\nvers\nFRANCAIS", highlightbackground="#D0D0FF", activebackground="#4040FF", width=my_width, height=my_height, font=my_font, relief="flat", command=lambda: toplevel_tester("et2fr"))
+    else:
+        bt_stats=Button(frame_principale, text="TESTER\nETRANGER\nvers\nFRANCAIS", bg="#D0D0FF", activebackground="#4040FF", width=my_width, height=my_height, font=my_font, relief="flat", command=lambda: toplevel_tester("et2fr"))
     bt_stats.grid(row=1, column=1, padx=my_pad, pady=my_pad)
         
     # bouton Quitter
-    bt_quitter=Button(frame_principale, text="QUITTER", bg="#D0D0D0", activebackground="#707070", font=my_font2, relief="flat", command=fenetre_principale.quit)
+    if (operating_system == "MacOS"):
+        bt_quitter=Button(frame_principale, text="QUITTER", highlightbackground="#D0D0D0", activebackground="#707070", font=my_font2, relief="flat", command=fenetre_principale.quit)
+    else:
+        bt_quitter=Button(frame_principale, text="QUITTER", bg="#D0D0D0", activebackground="#707070", font=my_font2, relief="flat", command=fenetre_principale.quit)
     bt_quitter.grid(row=2, column=0, columnspan=2, sticky=W+E+N+S, padx=my_pad, pady=my_pad)
         
     fenetre_principale.mainloop()
