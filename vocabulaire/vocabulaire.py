@@ -67,25 +67,20 @@ class liste_vocabulaire:
         # -- enleve les ' ' et '\n' en fin de chaine
         chaine2 = chaine
         dernier_car=chaine2[len(chaine2)-1]
-        #print "AU DEBUT: chaine2= |"+chaine2+"|"
         
         while ( dernier_car == " " or dernier_car == "\n"):
             # on enleve le dernier caractere            
             chaine2=chaine2[:-1]
-            #print "ensuite: chaine2= |"+chaine2+"|"
             if (len(chaine2)==0):
                 return chaine2
             dernier_car=chaine2[len(chaine2)-1]               
                     
         # -- enleve les ' ' en debut de chaine
         premier_car=chaine2[0]
-        
-        #print "AU DEBUT: chaine2= |"+chaine2+"|"
-        
+                
         while ( premier_car == " "):
             # on enleve le premier caractere            
             chaine2=chaine2[1:]
-            #print "ensuite: chaine2= |"+chaine2+"|"
             if (len(chaine2)==0):
                 return chaine2
             premier_car=chaine2[0]
@@ -110,9 +105,7 @@ class liste_vocabulaire:
             fr=ligne.split(";")[0]
             # et = from ligne, 2nd champ apres ; 
             et=ligne.split(";")[1]
-            
-            #print "LIGNE=|"+ligne+"| fr=|"+fr+"| fr_nettoyee=|"+self.chaine_nettoyee(fr)+"| et=|"+et+"| et_nettoyee=|"+self.chaine_nettoyee(et)+"|"
-            
+                        
             # nettoyage des chaines
             fr=self.chaine_nettoyee(fr)
             et=self.chaine_nettoyee(et)
@@ -125,7 +118,6 @@ class liste_vocabulaire:
             self.nb_expressions += 1
             self.expr_fr.append(fr)
             self.expr_et.append(et)
-            #print "|" + fr + "|" + et + "|"                       
          
         fichier.close()
         
@@ -268,9 +260,7 @@ class tester_voca():
             for i in range(self.liste.nb()):
                 if (self.entry[i].get() != self.liste.et(i)):
                     ligne_stats+=";"+self.liste.fr(i)+";"+self.liste.et(i)
-        
-        #print ligne_stats
-        
+                
         fic_stats=codecs.open(FICHIER_STATS,'a',encoding='utf-8')     
         fic_stats.write(ligne_stats+"\n")
         fic_stats.close()
@@ -469,13 +459,11 @@ def sauver_liste(text, fenetre, bt1, lab):
              
     # -- on demande le nom du fichier si besoin
     nom_fichier=lab.cget("text")
-    print("NOM_FICHIER=|"+nom_fichier+"|")
     while (nom_fichier==""):
         myFormats = [ ('vocabulaire','*.voc') ]
         nom_fichier = tkinter.filedialog.asksaveasfilename(parent=fenetre_principale,initialdir=FOLDER_VOCA,filetypes=myFormats,title="Choisis un nom pour cette liste...")
      
     # si le nom de fichier ne finit pas par ".voc", on rajoute ce suffixe
-    print("NOM_FICHIER initial = |"+nom_fichier+"|")
     if (len(nom_fichier)<4):
         nom_fichier+=".voc"
     else:
@@ -483,7 +471,6 @@ def sauver_liste(text, fenetre, bt1, lab):
         suffixe=suffixe.lower()
         if (suffixe!=".voc"):
             nom_fichier+=".voc"
-    print("NOM_FICHIER corrige = |"+nom_fichier+"|")
     
     # -- on affiche le nom du fichier
     lab.config(text=nom_fichier)
@@ -492,9 +479,7 @@ def sauver_liste(text, fenetre, bt1, lab):
     fichier=codecs.open(nom_fichier,'w',encoding='utf-8')
     fichier.write(chaine_corrigee)
     fichier.close   
-    
-    print("liste sauvee !")
-    
+        
     # -- on disable le boutons "Sauver" 
     bt1.config(state=DISABLED)   
     
