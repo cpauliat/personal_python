@@ -1,6 +1,21 @@
 #!/usr/bin/env python3
 #
-# TO DO: afficher niveau en cours
+# -*- coding: utf-8 -*-
+# --------------------------------------------------------------------------------------------------------------------------
+# Ce programme est une version Python du programme Crocobill de JP Munoz (1996)
+#
+# Ce programme utilise l'interface graphique Tkinter
+#
+# Auteur        : Christophe Pauliat
+# Platformes    : Linux / Windows / MacOS
+#
+# IMPORTANT: Pour MacOS, utiliser Python3 et tkinter depuis https://python.org car le Tcm/Tk fourni par Apple a des bugs
+#            cf. https://www.python.org/download/mac/tcltk/
+#
+# Versions
+#    2020-04-11: version initiale
+# --------------------------------------------------------------------------------------------------------------------------
+#
 # TO DO: afficher nb de vies restantes
 #
 # ---------- modules
