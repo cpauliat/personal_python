@@ -2,7 +2,7 @@
 #
 # -*- coding: utf-8 -*-
 # --------------------------------------------------------------------------------------------------------------------------
-# Ce programme est une version Python du programme Crocobill de JP Munoz (1996)
+# Ce programme est une version Python du jeux Crocobill de JP Munoz (1996)
 #
 # Ce programme utilise l'interface graphique Tkinter
 #
