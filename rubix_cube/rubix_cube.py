@@ -9,7 +9,7 @@
 # Auteur        : Christophe Pauliat
 # Platformes    : Linux / Windows / MacOS
 #
-# IMPORTANT: Pour MacOS, utiliser Python3 et tkinter depuis https://python.org car le Tcm/Tk fourni par Apple a des bugs
+# IMPORTANT: Pour MacOS, utiliser Python3 et tkinter depuis https://python.org car le Tk fourni par Apple a des bugs
 #            cf. https://www.python.org/download/mac/tcltk/
 #
 # Versions
