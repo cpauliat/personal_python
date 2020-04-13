@@ -142,13 +142,6 @@ def dessine_lune():
     # - dans le atan() car l'axe des y et l'axe des ye sont sens opposés
     beta = math.atan2 (- (ye_terre - ye_lune) , (xe_terre - xe_lune))
 
-    #if   xe_lune <  xe_terre and ye_lune < ye_terre:   print ("HAUT GAUCHE :",end='')
-    #elif xe_lune >= xe_terre and ye_lune < ye_terre:   print ("HAUT DROITE :",end='')
-    #elif xe_lune >= xe_terre and ye_lune >= ye_terre:  print ("BAS DROITE  :",end='')
-    #elif xe_lune <  xe_terre and ye_lune >= ye_terre:  print ("BAS GAUCHE  :",end='')
-
-    #print ("DEBUG: xe_lune=",xe_lune," ye_lune=",ye_lune," beta=",beta)
-
     # vecteur acceleration
     # l'acceleration de la lune est a = g * m_terre / d_lune^2
     a = g * m_terre / d_lune**2
@@ -183,9 +176,6 @@ def dessine_lune():
     # -- nouvelle position de la lune sur l'ecran
     xe_lune = int(xe_terre + px / echelle)
     ye_lune = int(ye_terre - py / echelle)
-
-    #print ("  DEBUG APRES: a = {:.0f} , {:.0f} v = {:.0f} , {:.0f}   p= {:.0f} , {:.0f}    xe_lune={:d}  ye_lune={:d}".format(ax,ay,vx,vy,px,py,xe_lune,ye_lune))
-    #print ("")
 
     # -- correction de trajectoire (déviation de l'orbite a cause erreurs d'arrondi)
     if t0 > 650 and xe_lune > xe_lune_perigee:
