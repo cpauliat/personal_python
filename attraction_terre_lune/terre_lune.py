@@ -59,8 +59,6 @@ d_lune = d_lune_perigee
 # coordonnees écran centre de la lune 
 xe_lune = xe_lune_perigee
 ye_lune = ye_lune_perigee
-xe_lune_old = xe_lune
-ye_lune_old = ye_lune
 
 # vecteur vitesse de la lune (composantes en m.s-1)
 vx_perigee = v_lune_perigee
@@ -177,10 +175,6 @@ def dessine_lune():
     # -- nouvelle distance lune terre sur l'écran en pixels
     de_lune = int(d_lune / echelle)
 
-    # -- on sauvegarde l'ancienne position
-    xe_lune_old = xe_lune
-    ye_lune_old = ye_lune
-
     # -- nouvelle position de la lune sur l'ecran
     xe_lune = int(xe_terre + px / echelle)
     ye_lune = int(ye_terre - py / echelle)
@@ -203,7 +197,8 @@ def dessine_lune():
         t0 = 0
 
     # -- On déplace l'image de la lune
-    drawing_canvas.move(lune, xe_lune - xe_lune_old, ye_lune - ye_lune_old)
+    #drawing_canvas.move(lune, xe_lune - xe_lune_old, ye_lune - ye_lune_old)
+    drawing_canvas.coords(lune, xe_lune, ye_lune)
 
     # -- ON affiche les paramètres
     message = "Temps (depuis début): {:.1f} jours \n\n".format(t0 / 24) + \
@@ -231,10 +226,6 @@ if __name__ == '__main__':
 
     drawing_canvas = tkinter.Canvas(drawing_frame, height=ye_max, width=xe_max, bg="black")
     drawing_canvas.pack(side=tkinter.LEFT)
-
-    # ---- Charge les images GIF
-    image_terre = tkinter.PhotoImage(file="images/terre.gif")
-    image_lune  = tkinter.PhotoImage(file="images/lune.gif")
 
     # ---- Label pour afficher les paramètres lunaires
     message=""
