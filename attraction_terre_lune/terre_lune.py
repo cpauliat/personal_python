@@ -15,6 +15,7 @@
 #
 # Versions
 #    2020-04-13: version initiale
+#    2020-04-14: optimisation (move image au lieu de delete puis create)
 # --------------------------------------------------------------------------------------------------------------------------
 #
 #
@@ -56,6 +57,8 @@ d_lune = d_lune_perigee
 # coordonnees écran centre de la lune 
 xe_lune = xe_lune_perigee
 ye_lune = ye_lune_perigee
+xe_lune_old = xe_lune
+ye_lune_old = ye_lune
 
 # vecteur vitesse de la lune (composantes en m.s-1)
 vx_perigee = v_lune_perigee
@@ -86,8 +89,8 @@ v_lune_min = v_lune_max = v_lune
 # ---------- fonctions
 def dessine_axes():
     # axes Tx et Ty
-    drawing_canvas.create_line (0, ye_terre, xe_max-1, ye_terre, dash=(4, 2), fill="grey")
-    drawing_canvas.create_line (xe_terre, 0, xe_terre, ye_max-1, dash=(4, 2), fill="grey")
+    drawing_canvas.create_line (0, ye_terre, xe_max-1, ye_terre, dash=(2, 2), fill="#000080")
+    drawing_canvas.create_line (xe_terre, 0, xe_terre, ye_max-1, dash=(2, 2), fill="#000080")
 
     # perigee
     drawing_canvas.create_line (xe_lune_perigee - 5, ye_lune_perigee - 5, xe_lune_perigee + 5, ye_lune_perigee + 5, fill="red")
@@ -131,8 +134,7 @@ def dessine_lune():
     global image_lune
     global duree_orbite
 
-    # -- On efface l'ancienne position de la lune
-    drawing_canvas.delete(lune)
+    # -- On crée un point à l'ancienne position du centre de la lune pour matérialiser l'orbite
     drawing_canvas.create_line (xe_lune, ye_lune, xe_lune+1, ye_lune+1, fill="grey")
 
     # -- on calcule le nouveau vecteur vitesse de la lune
@@ -173,6 +175,10 @@ def dessine_lune():
     # -- nouvelle distance lune terre sur l'écran en pixels
     de_lune = int(d_lune / echelle)
 
+    # -- on sauvegarde l'ancienne position
+    xe_lune_old = xe_lune
+    ye_lune_old = ye_lune
+
     # -- nouvelle position de la lune sur l'ecran
     xe_lune = int(xe_terre + px / echelle)
     ye_lune = int(ye_terre - py / echelle)
@@ -194,8 +200,8 @@ def dessine_lune():
         duree_orbite = t0
         t0 = 0
 
-    # -- On dessine la nouvelle position de la lune
-    lune = drawing_canvas.create_image(xe_lune, ye_lune, anchor=tkinter.CENTER, image=image_lune)
+    # -- On déplace l'image de la lune
+    drawing_canvas.move(lune, xe_lune - xe_lune_old, ye_lune - ye_lune_old)
 
     # -- ON affiche les paramètres
     message = "Temps (depuis début): {:.1f} jours \n\n".format(t0 / 24) + \
@@ -210,8 +216,6 @@ def dessine_lune():
 
     # -- on re-appelle cette fonction au bout d'un certain temps
     main_window.after(timer, dessine_lune)
-    
-
 
 # ---------- programme principal
 if __name__ == '__main__':
