@@ -13,7 +13,7 @@
 # IMPORTANT: Pour MacOS, utiliser Python3 et tkinter depuis https://python.org car le Tk fourni par Apple a des bugs
 #            cf. https://www.python.org/download/mac/tcltk/
 #
-# TO DO: rajouter boutons accelerer, ralentir, quitter
+# TO DO: rajouter croix rouge au périgée
 #
 # Versions
 #    2020-04-13: version initiale
