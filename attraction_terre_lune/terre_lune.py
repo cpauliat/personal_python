@@ -18,6 +18,7 @@
 # Versions
 #    2020-04-13: version initiale
 #    2020-04-14: optimisation (deplacement de l'image avec coords au lieu de delete puis create)
+#    2020-04-18: rajout boutons
 # --------------------------------------------------------------------------------------------------------------------------
 #
 #
