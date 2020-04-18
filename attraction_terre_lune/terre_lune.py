@@ -25,22 +25,24 @@
 import tkinter 
 from tkinter.font import *
 import math
+import time
 
 # ---------- paramètres initiaux
 
 # -- vitesse de déplacement sur écran
-timer = 20      # en ms, plus c'est petit, plus la lune bouge vite
+timer = 50      # en ms, plus c'est petit, plus la lune bouge vite
 
 # -- constante gravitationnelle
 g = 6.67259e-11       # constante de gravitation universelle (en N.m2.kg-2 ou m3.kg-1.s-2)
+
+# -- terre
+m_terre = 5.9736e24           # masse de la Terre (en kg)
+gm = g * m_terre
 
 # -- lune (position initiale au périgée)
 m_lune = 7.3477e22            # masse de la lune (en kg)
 v_lune_perigee = 1076         # périgée: vitesse initiale (maximale) de la lune (en m.s-1)
 d_lune_perigee = 363.3e6      # périgée: distance initiale (minimale) entre le centre de la lune et le centre de la terre (en m)
-
-# -- terre
-m_terre = 5.9736e24           # masse de la Terre (en kg)
 
 # -- ecran
 xe_max   = 1200               # largeur de la fenetre graphique
@@ -51,6 +53,9 @@ xe_lune_perigee  = 800        # Position X initiale du centre de la lune dans la
 ye_lune_perigee  = 100        # Position Y initiale du centre de la lune dans la fenetre graphique
 
 # ---------- variables
+
+# pause
+pause = True
 
 # vitesse lune et distance terre-lune
 v_lune = v_lune_perigee
@@ -68,7 +73,6 @@ vy = vy_perigee
 
 # Distance reelle correspondant a un pixel sur la fenetre graphique (en m.pixel-1)
 echelle = d_lune / math.sqrt ( (xe_terre - xe_lune)**2 + (ye_terre - ye_lune)**2 )
-#print ("echelle=",echelle)
 
 # vecteur position de la lune (centre de la Terre = centre du repere), (composantes en m)
 px_perigee = 0
@@ -79,12 +83,19 @@ py = py_perigee
 # durée d'une orbite en heures
 duree_orbite = 0
 
-# temps en heures
+# temps en secondes
 t0 = 0
+
+# delta temps (en secondes)
+delta_temps = 3600          # valeurs possibles (en sec): 300 (5m), 900 (15m), 1800 (30m), 3600 (1h), 7200 (2h), 14400 (4h)
 
 # min, max 
 d_lune_min = d_lune_max = d_lune
 v_lune_min = v_lune_max = v_lune
+
+# orbite
+dernier_quart_orbite = False
+orbite_complete = False
 
 # ---------- fonctions
 def dessine_axes():
@@ -133,86 +144,125 @@ def dessine_lune():
     global timer
     global image_lune
     global duree_orbite
+    global dernier_quart_orbite
+    global orbite_complete
 
-    # -- On crée un point à l'ancienne position du centre de la lune pour matérialiser l'orbite
-    drawing_canvas.create_line (xe_lune, ye_lune, xe_lune+1, ye_lune+1, fill="grey")
+    # ---- On ne bouge que si on n'est pas en pause
+    if not(pause):
 
-    # -- on calcule le nouveau vecteur vitesse de la lune
+        # -- Si on n'a pas encore fait une orbite complète,
+        # -- on crée un point à l'ancienne position du centre de la lune pour matérialiser l'orbite
+        if not(orbite_complete):
+            drawing_canvas.create_line (xe_lune, ye_lune, xe_lune+1, ye_lune+1, fill="grey")
 
-    # angle entre vecteur acceleration et axe (Tx) en radians 
-    # les vecteurs accelerations et OT sont colinéaires meme sens.
-    # - dans le atan() car l'axe des y et l'axe des ye sont sens opposés
-    beta = math.atan2 (- (ye_terre - ye_lune) , (xe_terre - xe_lune))
+        # -- temps en secondes
+        t0 += delta_temps 
 
-    # vecteur acceleration
-    # l'acceleration de la lune est a = g * m_terre / d_lune^2
-    a = g * m_terre / d_lune**2
-    ax = a * math.cos(beta)
-    ay = a * math.sin(beta)
+        # -- on calcule le nouveau vecteur vitesse de la lune 
+        # angle entre vecteur acceleration et axe (Tx) en radians 
+        # les vecteurs accelerations et OT sont colinéaires meme sens.
 
-    # delta temps (en secondes)
-    dt = 1800
+        # dans le atan() car l'axe des y et l'axe des ye sont sens opposés
+        beta = math.atan2 (- (ye_terre - ye_lune) , (xe_terre - xe_lune))
 
-    # temps en heures
-    t0 += dt / 3600
+        # vecteur acceleration
+        # l'acceleration de la lune est a = g * m_terre / d_lune^2
+        a = gm / (px**2 + py**2)
+        ax = a * math.cos(beta)
+        ay = a * math.sin(beta)
 
-    # -- nouveau vecteur vitesse: v = v + dt * a    (dt = delta temps, a = vecteur vitesse)
-    vx += dt * ax
-    vy += dt * ay
+        # -- nouveau vecteur vitesse: v = v + dt * a    (dt = delta temps, a = vecteur vitesse)
+        vx += delta_temps * ax
+        vy += delta_temps * ay
 
-    # -- nouvelle position de la lune: p = p + dt * v (vecteurs p et v)
-    px += dt * vx
-    py += dt * vy
-    v_lune = math.sqrt(vx**2 + vy**2)
-    v_lune_min = min(v_lune, v_lune_min)
-    v_lune_max = max(v_lune, v_lune_max)
+        # -- nouvelle position de la lune: p = p + dt * v (vecteurs p et v)
+        px += delta_temps * vx
+        py += delta_temps * vy
+        v_lune = math.sqrt(vx**2 + vy**2)
+        v_lune_min = min(v_lune, v_lune_min)
+        v_lune_max = max(v_lune, v_lune_max)
 
-    # -- nouvelle distance lune terre en m
-    d_lune = math.sqrt(px**2 + py**2)
-    d_lune_min = min(d_lune, d_lune_min)
-    d_lune_max = max(d_lune, d_lune_max)
+        # -- nouvelle distance lune terre en m
+        d_lune = math.sqrt(px**2 + py**2)
+        d_lune_min = min(d_lune, d_lune_min)
+        d_lune_max = max(d_lune, d_lune_max)
 
-    # -- nouvelle distance lune terre sur l'écran en pixels
-    de_lune = int(d_lune / echelle)
+        # -- nouvelle distance lune terre sur l'écran en pixels
+        de_lune = int(d_lune / echelle)
 
-    # -- nouvelle position de la lune sur l'ecran
-    xe_lune = int(xe_terre + px / echelle)
-    ye_lune = int(ye_terre - py / echelle)
+        # -- nouvelle position de la lune sur l'ecran
+        xe_lune = int(xe_terre + px / echelle)
+        ye_lune = int(ye_terre - py / echelle)
 
-    # -- correction de trajectoire (déviation de l'orbite a cause erreurs d'arrondi)
-    if t0 > 650 and xe_lune > xe_lune_perigee:
-        d_lune = d_lune_perigee
-        v_lune = v_lune_perigee
+        # -- si on rentre dans le dernier quart d'orbite, on le note pour se préparer à la fin d'orbite et à la correction de trajectoire
+        if not(dernier_quart_orbite) and px < 0 and py > 0: 
+            dernier_quart_orbite = True
 
-        vx = vx_perigee
-        vy = vy_perigee
+        # -- correction de trajectoire (déviation de l'orbite a cause erreurs d'arrondi)
+        if dernier_quart_orbite and px > 0:
+            d_lune = d_lune_perigee
+            v_lune = v_lune_perigee
 
-        px = px_perigee
-        py = py_perigee
+            vx = vx_perigee
+            vy = vy_perigee
 
-        xe_lune = xe_lune_perigee
-        ye_lune = ye_lune_perigee
+            px = px_perigee
+            py = py_perigee
 
-        duree_orbite = t0
-        t0 = 0
+            xe_lune = xe_lune_perigee
+            ye_lune = ye_lune_perigee
 
-    # -- On déplace l'image de la lune
-    #drawing_canvas.move(lune, xe_lune - xe_lune_old, ye_lune - ye_lune_old)
-    drawing_canvas.coords(lune, xe_lune, ye_lune)
+            duree_orbite = t0
+            t0 = 0
 
-    # -- ON affiche les paramètres
-    message = "Temps (depuis début): {:.1f} jours \n\n".format(t0 / 24) + \
-              "Durée d'une orbite  : {:.1f} jours \n\n".format(duree_orbite / 24) + \
-              "Distance Terre-lune : {:.0f} km \n".format(d_lune / 1000) + \
-              "   minimum (périgée): {:.0f} km \n".format(d_lune_min / 1000) + \
-              "   maximum (apogée) : {:.0f} km \n\n".format(d_lune_max / 1000) + \
-              "Vitesse lune        : {:4.0f} m/s-1 ou {:4.0f} km/h\n".format(v_lune, v_lune * 3.6) + \
-              "   minimum (apogée) : {:4.0f} m/s-1 ou {:4.0f} km/h\n".format(v_lune_min, v_lune_min * 3.6) + \
-              "   maximum (périgée): {:4.0f} m/s-1 ou {:4.0f} km/h".format(v_lune_max, v_lune_max * 3.6)
-    label.config(text=message)
+            dernier_quart_orbite = False
+            orbite_complete = True
+            
+        # -- On déplace l'image de la lune
+        drawing_canvas.coords(lune, xe_lune, ye_lune)
 
-    # -- on re-appelle cette fonction au bout d'un certain temps
+        # -- ON affiche les paramètres
+        message = "Temps (depuis début): {:.1f} jours \n\n".format(t0 / 24 / 3600) + \
+                  "Durée d'une orbite  : {:.1f} jours \n\n".format(duree_orbite / 24 / 3600) + \
+                  "Distance Terre-lune : {:.0f} km \n".format(d_lune / 1000) + \
+                  "   minimum (périgée): {:.0f} km \n".format(d_lune_min / 1000) + \
+                  "   maximum (apogée) : {:.0f} km \n\n".format(d_lune_max / 1000) + \
+                  "Vitesse lune        : {:4.0f} m/s-1 ou {:4.0f} km/h\n".format(v_lune, v_lune * 3.6) + \
+                  "   minimum (apogée) : {:4.0f} m/s-1 ou {:4.0f} km/h\n".format(v_lune_min, v_lune_min * 3.6) + \
+                  "   maximum (périgée): {:4.0f} m/s-1 ou {:4.0f} km/h".format(v_lune_max, v_lune_max * 3.6)
+        label.config(text=message)
+
+    # ---- pause ou pas, on re-appelle cette fonction au bout d'un certain temps
     main_window.after(timer, dessine_lune)
+
+def modifie_vitesse(op, txt):
+    global delta_temps      # valeurs possibles (en sec): 300 (5m), 900 (15m), 1800 (30m), 3600 (1h), 7200 (2h), 14400 (4h)
+    global drawing_canvas
+
+    if op == "+":
+        # on augmente delta_temps pour augmenter la vitesse de déplacement
+        if delta_temps == 300: delta_temps = 900
+        elif delta_temps < 14400: delta_temps = delta_temps * 2
+    else:
+        # on réduit delta_temps pour réduire la vitesse de déplacement
+        if delta_temps == 900: delta_temps = 300
+        if delta_temps > 900: delta_temps = delta_temps // 2
+
+    if (delta_temps < 3600):
+        drawing_canvas.itemconfigure (txt, text="delta temps: {:d} min".format(delta_temps // 60))
+    else:
+        drawing_canvas.itemconfigure (txt, text="delta temps: {:d} h".format(delta_temps // 3600))
+
+def pause_continue():
+    global pause
+    global bt_pause
+
+    if pause:
+        pause = False
+        bt_pause.config(text="Pause")
+    else:
+        pause = True
+        bt_pause.config(text="Continuer")
 
 # ---------- programme principal
 if __name__ == '__main__':
@@ -245,6 +295,19 @@ if __name__ == '__main__':
     # ---- Dessin de la lune 
     lune = drawing_canvas.create_image(xe_lune, ye_lune, anchor=tkinter.CENTER, image=image_lune)
     dessine_lune()
+   
+    # ---- rajout des boutons dans le canvas
+    t_dt   = drawing_canvas.create_text  (30, 40, anchor=tkinter.NW, text="delta temps: 1 h", font=Font(family='Courier New', size=16), fill="yellow")
+
+    bt_vitesse_p = tkinter.Button (main_window, text="Accélérer", height=2, width=10, command=lambda: modifie_vitesse("+", t_dt))
+    bt_vitesse_m = tkinter.Button (main_window, text="Ralentir",  height=2, width=10,  command=lambda: modifie_vitesse("-", t_dt))
+    bt_pause     = tkinter.Button (main_window, text="Démarrer",  height=2, width=10,  command=pause_continue)
+    bt_quit      = tkinter.Button (main_window, text="Quitter",   height=2, width=10, command=main_window.destroy)
+
+    drawing_canvas.create_window(30, 80, anchor=tkinter.NW, window=bt_vitesse_p)
+    drawing_canvas.create_window(140, 80, anchor=tkinter.NW, window=bt_vitesse_m)
+    drawing_canvas.create_window(30, 130, anchor=tkinter.NW, window=bt_pause)
+    drawing_canvas.create_window(xe_max - 30, 40,  anchor=tkinter.NE, window=bt_quit)
 
     # ---- Boucle de la fenetre graphique
     main_window.mainloop()
