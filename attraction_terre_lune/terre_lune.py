@@ -30,7 +30,7 @@ import time
 # ---------- paramètres initiaux
 
 # -- vitesse de déplacement sur écran
-timer = 50      # en ms, plus c'est petit, plus la lune bouge vite
+timer = 25      # en ms, plus c'est petit, plus la lune bouge vite, valeurs possibles: 12.5, 25, 50, 100, 200, 400, 800
 
 # -- constante gravitationnelle
 g = 6.67259e-11       # constante de gravitation universelle (en N.m2.kg-2 ou m3.kg-1.s-2)
@@ -87,7 +87,7 @@ duree_orbite = 0
 t0 = 0
 
 # delta temps (en secondes)
-delta_temps = 3600          # valeurs possibles (en sec): 300 (5m), 900 (15m), 1800 (30m), 3600 (1h), 7200 (2h), 14400 (4h)
+delta_temps = 3600          
 
 # min, max 
 d_lune_min = d_lune_max = d_lune
@@ -217,7 +217,7 @@ def dessine_lune():
 
             dernier_quart_orbite = False
             orbite_complete = True
-            
+
         # -- On déplace l'image de la lune
         drawing_canvas.coords(lune, xe_lune, ye_lune)
 
@@ -233,25 +233,19 @@ def dessine_lune():
         label.config(text=message)
 
     # ---- pause ou pas, on re-appelle cette fonction au bout d'un certain temps
-    main_window.after(timer, dessine_lune)
+    main_window.after(int(timer), dessine_lune)
 
 def modifie_vitesse(op, txt):
-    global delta_temps      # valeurs possibles (en sec): 300 (5m), 900 (15m), 1800 (30m), 3600 (1h), 7200 (2h), 14400 (4h)
+    global timer            # valeurs possibles: 12.5, 25, 50, 100, 200, 400, 800
     global drawing_canvas
 
     if op == "+":
-        # on augmente delta_temps pour augmenter la vitesse de déplacement
-        if delta_temps == 300: delta_temps = 900
-        elif delta_temps < 14400: delta_temps = delta_temps * 2
+        if timer >= 25: timer = timer / 2
     else:
-        # on réduit delta_temps pour réduire la vitesse de déplacement
-        if delta_temps == 900: delta_temps = 300
-        if delta_temps > 900: delta_temps = delta_temps // 2
+        if timer <= 400: timer = timer * 2
+    
+    drawing_canvas.itemconfigure (txt, text="Rafraichissement toutes les {:d} ms".format(int(timer)))
 
-    if (delta_temps < 3600):
-        drawing_canvas.itemconfigure (txt, text="delta temps: {:d} min".format(delta_temps // 60))
-    else:
-        drawing_canvas.itemconfigure (txt, text="delta temps: {:d} h".format(delta_temps // 3600))
 
 def pause_continue():
     global pause
@@ -297,11 +291,11 @@ if __name__ == '__main__':
     dessine_lune()
    
     # ---- rajout des boutons dans le canvas
-    t_dt   = drawing_canvas.create_text  (30, 40, anchor=tkinter.NW, text="delta temps: 1 h", font=Font(family='Courier New', size=16), fill="yellow")
+    t_dt   = drawing_canvas.create_text  (30, 40, anchor=tkinter.NW, text="Rafraichissement toutes les {:d} ms".format(timer), font=Font(family='Courier New', size=14), fill="yellow")
 
     bt_vitesse_p = tkinter.Button (main_window, text="Accélérer", height=2, width=10, command=lambda: modifie_vitesse("+", t_dt))
-    bt_vitesse_m = tkinter.Button (main_window, text="Ralentir",  height=2, width=10,  command=lambda: modifie_vitesse("-", t_dt))
-    bt_pause     = tkinter.Button (main_window, text="Démarrer",  height=2, width=10,  command=pause_continue)
+    bt_vitesse_m = tkinter.Button (main_window, text="Ralentir",  height=2, width=10, command=lambda: modifie_vitesse("-", t_dt))
+    bt_pause     = tkinter.Button (main_window, text="Démarrer",  height=2, width=10, command=pause_continue)
     bt_quit      = tkinter.Button (main_window, text="Quitter",   height=2, width=10, command=main_window.destroy)
 
     drawing_canvas.create_window(30, 80, anchor=tkinter.NW, window=bt_vitesse_p)
