@@ -2,7 +2,7 @@
 #
 # -*- coding: utf-8 -*-
 # --------------------------------------------------------------------------------------------------------------------------
-# Ce programme est une version Python du jeux Crocobill de JP Munoz (1996)
+# Ce programme est une version Python du jeu Crocobill de JP Munoz (1996, Windows 3.1)
 #
 # Ce programme utilise l'interface graphique Tkinter
 #
@@ -14,22 +14,26 @@
 #
 # Versions
 #    2020-04-11: version initiale
+#    2020-04-19: ajout affichage du bas et bouton quitter
 # --------------------------------------------------------------------------------------------------------------------------
 #
-# TO DO: afficher nb de vies restantes
+# TO DO: rajouter bouton suicide si le croco est coincé ?
+# TO DO: remettre focus sur fenetre principale apres fermeture d'une fenetre messagebox
 #
 # ---------- modules
 import tkinter 
 import tkinter.messagebox
+import tkinter.font
 import math
 import random
 import time
 
 # ---------- paramètres initiaux
-box_size = 32
+taille_case = 32
 niveau_actuel = 1
 niveau_dernier = 3
 nb_vies_restantes = 3
+croco_dir = "G"         # le croco regarde a gauche
 
 # ---------- Niveaux
 
@@ -51,10 +55,10 @@ niveau_string.append("MMMMMMMMMMMMMMMMMMMM" + \
                      "MHHHRORHHHHHHHHRHHHM" + \
                      "MHHHRRRHHHHHHHHRHHHM" + \
                      "MHHHHHOHHHHHHHHRHHHM" + \
-                     "MHHHHHHHHHHHHHHRHHHM" + \
+                     "MMMMMMMMMMMMHHHRHHHM" + \
                      "MHHHHHHHHHHHHHHRHHHM" + \
                      "MHHHHHHHHHHHHHOHHHHM" + \
-                     "MHHHHHHHHHHHHHHHHHHM" + \
+                     "MHHHHHHHHMMMMMMMMMMM" + \
                      "MHHHHOHHHHHHHHHHHHHM" + \
                      "MHHHHHHHHHHHHHHHHHHM" + \
                      "MHHHHHHHHHVVVVVVVVVM" + \
@@ -62,28 +66,28 @@ niveau_string.append("MMMMMMMMMMMMMMMMMMMM" + \
                      "MMMMMMMMMMMMMMMMMMMM")
 
 # niveau 2
-niveau_nb_x.append (20)
+niveau_nb_x.append (22)
 niveau_nb_y.append (20)
-niveau_string.append("MMMMMMMMMMMMMMMMMMMM" + \
-                     "MCHHHHHHHHHHHHHHHHHM" + \
-                     "MHMMMMMMMMMMMMMMMMHM" + \
-                     "MHMHHHHHHHHHHHHHHMHM" + \
-                     "MHMHMMMMMMMMMMMMHMHM" + \
-                     "MHMHMHRHRHRHHHHMHMHM" + \
-                     "MHMHMHHHHHHHHHHMHMHM" + \
-                     "MHMHMRRHHHHHHOHMRMHM" + \
-                     "MHMHMOOHMMMMMMHMHHHM" + \
-                     "MHMHMHRHMHHHHMHMVMHM" + \
-                     "MHMHRVOHMHOHHMHMVMHM" + \
-                     "MHMHMVHHMMMMHMHMHMHM" + \
-                     "MHMHMVHHHOHHHMHMHMHM" + \
-                     "MHMHMHHMMMMMMMOMHMHM" + \
-                     "MHMHMHHHHHHHHHHMHMHM" + \
-                     "MHMHMMMMMMMMOMMMHMHM" + \
-                     "MHMHHHHHHHHHHHHHHMHM" + \
-                     "MHMMMMMMRMMMMMMMMMHM" + \
-                     "MHHHHHHHHHHHHHHHHHHM" + \
-                     "MMMMMMMMMMMMMMMMMMMM")
+niveau_string.append("MMMMMMMMMMMMMMMMMMMMMM" + \
+                     "MCHHHHHHHHHHHHHHHHHHHM" + \
+                     "MHMMMMMMMMMMMMMMMMMMHM" + \
+                     "MHMHHHHHHHHHHHHHHHHMHM" + \
+                     "MHMHMMMMMMMMMMMMMMHMHM" + \
+                     "MHMHMHRHRHRHHHHHHMHMHM" + \
+                     "MHMHMHHHHHHHHHHHHMHMHM" + \
+                     "MHMHMRRHHHHHHHHOHMRMHM" + \
+                     "MHMHMOOHMMMMMMHHHMHHHM" + \
+                     "MHMHMHRHMHHHHMHHHMVMHM" + \
+                     "MHMHRVOHMHOHHMHHHMVMHM" + \
+                     "MHMHMVHHMMMMHMHHHMHMHM" + \
+                     "MHMHMVHHHOHHHMHHHMHMHM" + \
+                     "MHMHMHHMMMMMMMOHHMHMHM" + \
+                     "MHMHMHHHHHHHHHHHHMHMHM" + \
+                     "MHMHMMMMMMMMOMMMMMHMHM" + \
+                     "MHMHHHHHHHHHHHHHHHHMHM" + \
+                     "MHMMMMMMRMMMMMMMMMMMHM" + \
+                     "MHHHHHHHHHHHHHHHHHHHHM" + \
+                     "MMMMMMMMMMMMMMMMMMMMMM")
 
 # niveau 3
 niveau_nb_x.append (40)
@@ -153,91 +157,69 @@ def init_tableau(niv):
 # ---- dessin initial du tableau
 def dessine_croco(x,y):
     global drawing_canvas
-    global box_size
+    global taille_case
     global image_croco_g
     global image_croco_d
     global croco_dir
-    #drawing_canvas.create_rectangle(x * box_size, y * box_size, (x + 1) * box_size, (y + 1) * box_size, fill="red")
+    #drawing_canvas.create_rectangle(x * taille_case, y * taille_case, (x + 1) * taille_case, (y + 1) * taille_case, fill="red")
     if croco_dir == "G":
-        drawing_canvas.create_image(x * box_size, y * box_size, anchor=tkinter.NW, image=image_croco_g)
+        drawing_canvas.create_image(x * taille_case, y * taille_case, anchor=tkinter.NW, image=image_croco_g)
     else:
-        drawing_canvas.create_image(x * box_size, y * box_size, anchor=tkinter.NW, image=image_croco_d)
+        drawing_canvas.create_image(x * taille_case, y * taille_case, anchor=tkinter.NW, image=image_croco_d)
     
 def dessine_croco_mort(x,y):
     global drawing_canvas
-    global box_size
+    global taille_case
     global image_mort
-    drawing_canvas.create_rectangle(x * box_size, y * box_size, (x + 1) * box_size, (y + 1) * box_size, fill="red")
-    drawing_canvas.create_image(x * box_size, y * box_size, anchor=tkinter.NW, image=image_croco_mort)
+    drawing_canvas.create_rectangle(x * taille_case, y * taille_case, (x + 1) * taille_case, (y + 1) * taille_case, fill="red")
+    drawing_canvas.create_image(x * taille_case, y * taille_case, anchor=tkinter.NW, image=image_croco_mort)
 
 def dessine_mur(x,y):
     global drawing_canvas
-    global box_size
+    global taille_case
     global image_mur
-    #drawing_canvas.create_rectangle(x * box_size, y * box_size, (x + 1) * box_size, (y + 1) * box_size, fill="#404040")
-    drawing_canvas.create_image(x * box_size, y * box_size, anchor=tkinter.NW, image=image_mur)
+    #drawing_canvas.create_rectangle(x * taille_case, y * taille_case, (x + 1) * taille_case, (y + 1) * taille_case, fill="#404040")
+    drawing_canvas.create_image(x * taille_case, y * taille_case, anchor=tkinter.NW, image=image_mur)
 
 def dessine_herbe(x,y):
     global drawing_canvas
-    global box_size
+    global taille_case
     global image_herbe
-    #drawing_canvas.create_rectangle(x * box_size, y * box_size, (x + 1) * box_size, (y + 1) * box_size, fill="green")
-    drawing_canvas.create_image(x * box_size, y * box_size, anchor=tkinter.NW, image=image_herbe)
+    #drawing_canvas.create_rectangle(x * taille_case, y * taille_case, (x + 1) * taille_case, (y + 1) * taille_case, fill="green")
+    drawing_canvas.create_image(x * taille_case, y * taille_case, anchor=tkinter.NW, image=image_herbe)
 
 def dessine_rocher(x,y):
     global drawing_canvas
-    global box_size
+    global taille_case
     global image_rocher
-    #drawing_canvas.create_oval(x * box_size, y * box_size, (x + 1) * box_size, (y + 1) * box_size, fill="grey")
-    drawing_canvas.create_image(x * box_size, y * box_size, anchor=tkinter.NW, image=image_rocher)
+    #drawing_canvas.create_oval(x * taille_case, y * taille_case, (x + 1) * taille_case, (y + 1) * taille_case, fill="grey")
+    drawing_canvas.create_image(x * taille_case, y * taille_case, anchor=tkinter.NW, image=image_rocher)
 
 def dessine_oeuf(x,y):
     global drawing_canvas
-    global box_size
+    global taille_case
     global image_oeuf
-    #bs2 = box_size // 2
-    #bsl = box_size // 2.5
-    #bsc = box_size // 5.5
-    #x0 = x * box_size + bs2 + 1
-    #y0 = y * box_size + bs2 + 2
-    #x1 = int (x0 + bsl * math.cos(90 * math.pi / 180))
-    #y1 = int (y0 - bsl * math.sin(90 * math.pi / 180))
-    #x2 = int (x0 + bsc * math.cos(126 * math.pi / 180))
-    #y2 = int (y0 - bsc * math.sin(126 * math.pi / 180))
-    #x3 = int (x0 + bsl * math.cos(162 * math.pi / 180))
-    #y3 = int (y0 - bsl * math.sin(162 * math.pi / 180))
-    #x4 = int (x0 + bsc * math.cos(198 * math.pi / 180))
-    #y4 = int (y0 - bsc * math.sin(198 * math.pi / 180))
-    #x5 = int (x0 + bsl * math.cos(234 * math.pi / 180))
-    #y5 = int (y0 - bsl * math.sin(234 * math.pi / 180))
-    #x6 = int (x0 + bsc * math.cos(270 * math.pi / 180))
-    #y6 = int (y0 - bsc * math.sin(270 * math.pi / 180))
-    #x7 = int (x0 + bsl * math.cos(306 * math.pi / 180))
-    #y7 = int (y0 - bsl * math.sin(306 * math.pi / 180))
-    #x8 = int (x0 + bsc * math.cos(342 * math.pi / 180))
-    #y8 = int (y0 - bsc * math.sin(342 * math.pi / 180))
-    #x9 = int (x0 + bsl * math.cos(18  * math.pi / 180))
-    #y9 = int (y0 - bsl * math.sin(18  * math.pi / 180))
-    #x10= int (x0 + bsc * math.cos(54  * math.pi / 180))
-    #y10= int (y0 - bsc * math.sin(54  * math.pi / 180))
-    #drawing_canvas.create_oval(x * box_size, y * box_size, (x + 1) * box_size, (y + 1) * box_size, fill="orange")
-    #drawing_canvas.create_polygon(x1,y1, x2,y2, x3,y3, x4,y4, x5,y5, x6,y6, x7,y7, x8,y8, x9,y9, x10,y10, fill="yellow")
-    drawing_canvas.create_image(x * box_size, y * box_size, anchor=tkinter.NW, image=image_oeuf)
+    drawing_canvas.create_image(x * taille_case, y * taille_case, anchor=tkinter.NW, image=image_oeuf)
 
 def dessine_vide(x,y):
     global drawing_canvas
-    global box_size
-    drawing_canvas.create_rectangle(x * box_size, y * box_size, (x + 1) * box_size, (y + 1) * box_size, fill="black")
+    global taille_case
+    drawing_canvas.create_rectangle(x * taille_case, y * taille_case, (x + 1) * taille_case, (y + 1) * taille_case, fill="black")
 
 def dessine_tableau():
     global nb_x
     global nb_y
-    global box_size
-    global main_window
+    global taille_case
     global drawing_canvas
+    global label_niveau
+    global label_nb_oeufs
+    global label_nb_vies
+    global niveau_actuel
+    global nb_vies_restantes
+    global nb_oeufs_restants
 
     # Dimensionne le canvas à la valeur nécessaire au niveau actuel
-    drawing_canvas.config(width=box_size*nb_x, height=box_size*nb_y)
+    drawing_canvas.config(width=taille_case*nb_x, height=taille_case*nb_y)
 
     # dessine chaque case du tableau
     for x in range(nb_x):
@@ -255,20 +237,37 @@ def dessine_tableau():
             elif tableau[x][y] == "vide":  
                 dessine_vide(x,y)
 
-    main_window.update()
-    time.sleep(5)
+    # on affiche le numéro du niveau
+    label_niveau.config(text="Niveau {:d}".format(niveau_actuel))
 
+    # on affiche le nombre d'oeufs restants
+    label_nb_oeufs.config(text="Oeufs restants: {:d}".format(nb_oeufs_restants))
+
+    # on affiche le nombre de vies restantes
+    label_nb_vies.config(text="Vies restantes: {:d}".format(nb_vies_restantes))
 
 # ---- le croco attrape une oeuf
 def attrape_oeuf():
     global nb_oeufs_restants
+    global fenetre
+    global label_nb_oeufs
+    global drawing_canvas
+    global taille_case
+    global croco_x
+    global croco_y
 
+    # on décremente le nombre d'oeufs restants
     nb_oeufs_restants -= 1
-    # TO DO: rajouter un son ou effet visuel
-    #print ("oeuf attrape ! reste {:d} oeufs".format(nb_oeufs_restants))
+    label_nb_oeufs.config(text="Oeufs restants: {:d}".format(nb_oeufs_restants))
 
+    # Effet visuel: MIAM !!
+    text = drawing_canvas.create_text (croco_x * taille_case, croco_y * taille_case, text="MIAM !!", fill="red", font=tkinter.font.Font(family='Arial', size=32))
+    fenetre.update()
+    time.sleep(0.5)
+    drawing_canvas.delete(text)
+
+    # si c'était le dernier oeuf, on a réussi ce niveau
     if nb_oeufs_restants == 0:
-        # C'est gagne
         gagne()
 
 # ---- C'est gagne: Le croco a mange tous les oeufs du niveau
@@ -276,28 +275,27 @@ def attrape_oeuf():
 def gagne():
     global niveau_actuel
     global niveau_dernier
-    global main_window
+    global fenetre
     if niveau_actuel < niveau_dernier:
         tkinter.messagebox.showinfo("Gagné","Bravo ! Vous avez réussi le niveau {:d}. \n\nCliquer OK pour passer au niveau suivant".format(niveau_actuel))
         niveau_actuel += 1
         init_tableau(niveau_actuel)
         dessine_tableau()
-        main_window.title('Crocobill: niveau '+str(niveau_actuel))
-        main_window.update()
+        #fenetre.focus_set()     # on met le focus la fenetre principale pour éviter de devoir cliquer dans la fenetre avant de jouer
     else:
         tkinter.messagebox.showinfo("Gagné","Bravo ! Vous avez réussi le dernier niveau\n\nCliquer OK pour sortir du programme")
         exit (0)
 
 # ---- deplacement du croco
-def move(event):
+def bouge(event):
     global croco
     global drawing_canvas
-    global main_window
+    global fenetre
     global croco_x
     global croco_y
     global nb_x
     global nb_x
-    global box_size
+    global taille_case
     global croco_dir
 
     croco_bouge = False
@@ -373,38 +371,36 @@ def move(event):
     # si on a bouge, on met a jour l'affichage
     if croco_bouge:
 
-        # delete croco in previous position
-        # drawing_canvas.delete(croco)
-
-        # draw empty space in the previous location of croco
+        # on dessine une case vide à l'ancienne position du croco
         dessine_vide(croco_x_old, croco_y_old)
         tableau[croco_x_old][croco_y_old] = "vide"
 
-        # display croco in new position
+        # on affiche le croco à sa nouvelle position
         dessine_croco(croco_x, croco_y)
         tableau[croco_x][croco_y] = "croco"
 
         # update display
-        main_window.update()
+        fenetre.update()
 
-        # si le croco a pousse un rocher sur une case vide, on affiche le rocher
+        # si le croco a poussé un rocher sur une case vide, on affiche le rocher
         if bouge_rocher:
             dessine_rocher(croco_x_old+rocher_x, croco_y_old)
             tableau[croco_x_old+rocher_x][croco_y_old] = "rocher"
             rocher_tombe(croco_x_old+rocher_x, croco_y_old, False)
         
         # si le croco avait un rocher au dessus de lui avant de bouger, ce rocher va tomber
-        elif rocher_va_tomber:
+        if rocher_va_tomber:
             rocher_tombe(rx,ry,False)
 
+        # si le croco a attrapé un oeuf
         if oeuf_attrape:
             attrape_oeuf()
         
 # ---- On teste si le rocher peut tomber (si vide sous le rocher)
 def rocher_tombe(x,y,rocher_en_train_de_tomber):
-    global main_window
+    global fenetre
 
-    main_window.update()
+    fenetre.update()
     if y+1 < nb_y and tableau[x][y+1] == "vide":
         # delai pour voir l'animation du rocher qui tombe
         time.sleep (0.3)
@@ -428,7 +424,7 @@ def rocher_tombe(x,y,rocher_en_train_de_tomber):
     # le croco se fait ecraser et perd une vie
     if rocher_en_train_de_tomber and y+1 < nb_y and tableau[x][y+1] == "croco":
         dessine_croco_mort(x,y+1)
-        main_window.update()
+        fenetre.update()
         croco_perd_une_vie()
 
 # ----- le croco perf une vie
@@ -436,8 +432,12 @@ def croco_perd_une_vie():
     global niveau_actuel
     global niveau_dernier
     global nb_vies_restantes
+    global fenetre
 
+    # on décremente le nombre de vies restantes
     nb_vies_restantes -= 1
+    label_nb_vies.config(text="Vies restantes: {:d}".format(nb_vies_restantes))
+    fenetre.update()
 
     if nb_vies_restantes >= 1:
         message = "Aie ! \nLe croco s'est pris un rocher sur la tête\net a perdu une vie. \n\nCliquer OK pour recommencer ce niveau\n\n"
@@ -446,26 +446,42 @@ def croco_perd_une_vie():
         else:
             message = message + "ATTENTION, il reste 1 seule vie."
 
-        tkinter.messagebox.showinfo("Une vie perdu", message)
+        tkinter.messagebox.showinfo("Une vie perdue", message)
         init_tableau(niveau_actuel)
         dessine_tableau()
+        #fenetre.focus_set()     # on met le focus la fenetre principale pour éviter de devoir cliquer dans la fenetre avant de jouer
     else:
         tkinter.messagebox.showinfo("Perdu","Le croco a perdu toutes ses vies.\n\nCliquer OK pour sortir du programme")
         exit (2)    
+
+# ---- On recommence le niveau actuel après confirmation
+def recommencer():
+    global niveau_actuel
+
+    if tkinter.messagebox.askyesno("On recommence","Voulez-vous vraiment recommencer le niveau actuel ?"): 
+        init_tableau(niveau_actuel)
+        dessine_tableau()
+
+# ---- Fin du programme après confirmation
+def quitter():
+    if tkinter.messagebox.askyesno("Fin du programme","Voulez-vous vraiment quitter le jeu ?"): 
+        fenetre.destroy()
 
 # ---------- programme principal
 if __name__ == '__main__':
 
     # ---- Main Window
-    main_window = tkinter.Tk()
-    main_window.title('Crocobill: niveau '+str(niveau_actuel))
+    fenetre = tkinter.Tk()
+    fenetre.title('Crocobill')
+    fenetre.config(bg="#404050")
+    fenetre.resizable(width=False, height=False)    # on empeche le redimensionnement manuel de la fenetre
 
-    # ---- Drawing canvas
-    drawing_frame = tkinter.Frame(main_window)
-    drawing_frame.pack(side=tkinter.LEFT, padx=0, pady=0)
+    # ---- Drawing frame et canvas
+    drawing_frame = tkinter.Frame(fenetre, bg="black")
+    drawing_frame.pack(padx=20, pady=20)
 
     drawing_canvas = tkinter.Canvas(drawing_frame, bg="black")
-    drawing_canvas.pack(side=tkinter.LEFT)
+    drawing_canvas.pack()
 
     # ---- Charge les images GIF
     image_mur        = tkinter.PhotoImage(file="images/mur.gif")
@@ -476,20 +492,43 @@ if __name__ == '__main__':
     image_croco_d    = tkinter.PhotoImage(file="images/croco-droit.gif")
     image_croco_mort = tkinter.PhotoImage(file="images/croco-mort.gif")
 
-    # ---- 
-    #dummy_label = tkinter.Label(main_window)
-    #dummy_label.image = image_mur
-    #dummy_label.pack()
-
-    # ---- Direction du croco pour affichage image croco gauche or croco droite
-    croco_dir = "G"
-
-    # ---- Dessine tableau 
+    # ---- Initialise le tableau 
     init_tableau(niveau_actuel)
+
+    # ---- Une frame en bas pour afficher des infos et bouton quitter
+    frame_bas = tkinter.Frame(fenetre, bg="#404050")
+    frame_bas.pack(fill=tkinter.X, padx=20, pady=0)
+
+    #relief=tkinter.RIDGE, 
+    label_niveau = tkinter.Label(frame_bas, text="", font=tkinter.font.Font(family='Arial', size=20), bg="#404050", fg="#00F000")
+    label_niveau.grid(row=0, column=0, padx=5, pady=0)
+
+    label_nb_oeufs = tkinter.Label(frame_bas, text="", font=tkinter.font.Font(family='Arial', size=20), bg="#404050", fg="#00F000")
+    label_nb_oeufs.grid(row=0, column=1, padx=5, pady=0)
+
+    label_nb_vies = tkinter.Label(frame_bas, text="", font=tkinter.font.Font(family='Arial', size=20), bg="#404050", fg="#00F000")
+    label_nb_vies.grid(row=0, column=2, padx=5, pady=0)
+
+    boutton_recommencer = tkinter.Button(frame_bas, text=" Recommencer ", font=tkinter.font.Font(family='Arial', size=20), bg="#404050", fg="black", command=recommencer)
+    boutton_recommencer.grid(row=0, column=3, padx=5, pady=0)
+
+    boutton_quitter = tkinter.Button(frame_bas, text=" Quitter ", font=tkinter.font.Font(family='Arial', size=20), bg="#404050", fg="black", command=quitter)
+    boutton_quitter.grid(row=0, column=4, padx=5, pady=0)
+
+    frame_bas.columnconfigure(0, weight=1)
+    frame_bas.columnconfigure(1, weight=1)
+    frame_bas.columnconfigure(2, weight=1)
+    frame_bas.columnconfigure(3, weight=1)
+    frame_bas.columnconfigure(4, weight=1)
+
+    # juste pour afficher un espace sous la frame précédente
+    tkinter.Frame(fenetre, bg="#404050").pack(fill=tkinter.X, padx=20, pady=10)
+
+    # ---- On affiche le tableau à l'écran
     dessine_tableau()
 
-    # ---- Monitor keyboards
-    main_window.bind("<KeyPress>", move)
+    # ---- Appelle la fonction bouge si l'utilisateur presse une touche
+    fenetre.bind("<KeyPress>", bouge)
 
     # ---- Boucle de la fenetre graphique
-    main_window.mainloop()
+    fenetre.mainloop()
