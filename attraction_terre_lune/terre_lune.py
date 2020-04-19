@@ -13,8 +13,6 @@
 # IMPORTANT: Pour MacOS, utiliser Python3 et tkinter depuis https://python.org car le Tk fourni par Apple a des bugs
 #            cf. https://www.python.org/download/mac/tcltk/
 #
-# TO DO: rajouter croix rouge au périgée
-#
 # Versions
 #    2020-04-13: version initiale
 #    2020-04-14: optimisation (deplacement de l'image avec coords au lieu de delete puis create)
@@ -96,6 +94,7 @@ v_lune_min = v_lune_max = v_lune
 
 # orbite
 dernier_quart_orbite = False
+second_quart_orbite = False
 orbite_complete = False
 
 # ---------- fonctions
@@ -145,6 +144,7 @@ def dessine_lune():
     global timer
     global image_lune
     global duree_orbite
+    global second_quart_orbite
     global dernier_quart_orbite
     global orbite_complete
 
@@ -194,6 +194,16 @@ def dessine_lune():
         # -- nouvelle position de la lune sur l'ecran
         xe_lune = int(xe_terre + px / echelle)
         ye_lune = int(ye_terre - py / echelle)
+
+        # -- si on rentre dans le second quart d'orbite, on le note pour se préparer à indiquer la position de l'apogée
+        if not(second_quart_orbite) and px > 0 and py < 0: 
+            second_quart_orbite = True
+        
+        # -- dessine position apogée
+        if second_quart_orbite and not(orbite_complete) and px < 0:
+            second_quart_orbite = False
+            drawing_canvas.create_line (xe_terre - 5, ye_lune - 5, xe_terre + 5, ye_lune + 5, fill="red")
+            drawing_canvas.create_line (xe_terre - 5, ye_lune + 5, xe_terre + 5, ye_lune - 5, fill="red")            
 
         # -- si on rentre dans le dernier quart d'orbite, on le note pour se préparer à la fin d'orbite et à la correction de trajectoire
         if not(dernier_quart_orbite) and px < 0 and py > 0: 
