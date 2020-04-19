@@ -17,7 +17,7 @@
 #    2020-04-19: ajout affichage du bas et bouton quitter
 # --------------------------------------------------------------------------------------------------------------------------
 #
-# TO DO: rajouter bouton suicide si le croco est coincé ?
+# TO DO: enlever le bord blanc autour du canvas_dessin
 # TO DO: remettre focus sur fenetre principale apres fermeture d'une fenetre messagebox
 #
 # ---------- modules
@@ -27,6 +27,11 @@ import tkinter.font
 import math
 import random
 import time
+
+# ---------- couleurs
+couleur_fond = "#404050"
+#couleur_labels = "#00F000"
+couleur_labels = "#FF0080"
 
 # ---------- paramètres initiaux
 taille_case = 32
@@ -42,28 +47,24 @@ niveau_nb_x = []
 niveau_nb_y = []
 
 # niveau 1
-niveau_nb_x.append (20)
-niveau_nb_y.append (20)
-niveau_string.append("MMMMMMMMMMMMMMMMMMMM" + \
-                     "MHHHHHHHHHHHHHHHHHHM" + \
-                     "MHHHHHHHHHHHHHHHHHHM" + \
-                     "MHHHHCHHHHHRHHHHRHHM" + \
-                     "MHHHHHHHHHHHHHHHHHHM" + \
-                     "MHHHRHRHRHRHHHHRHHHM" + \
-                     "MHHHHHHHHHHHHHHRHHHM" + \
-                     "MHHHRRRHHHHHHOHHRHHM" + \
-                     "MHHHRORHHHHHHHHRHHHM" + \
-                     "MHHHRRRHHHHHHHHRHHHM" + \
-                     "MHHHHHOHHHHHHHHRHHHM" + \
-                     "MMMMMMMMMMMMHHHRHHHM" + \
-                     "MHHHHHHHHHHHHHHRHHHM" + \
-                     "MHHHHHHHHHHHHHOHHHHM" + \
-                     "MHHHHHHHHMMMMMMMMMMM" + \
-                     "MHHHHOHHHHHHHHHHHHHM" + \
-                     "MHHHHHHHHHHHHHHHHHHM" + \
-                     "MHHHHHHHHHVVVVVVVVVM" + \
-                     "MHHHHHHHHHHHHHHHHHHM" + \
-                     "MMMMMMMMMMMMMMMMMMMM")
+niveau_nb_x.append (22)
+niveau_nb_y.append (16)
+niveau_string.append("MMMMMMMMMMMMMMMMMMMMMM" + \
+                     "MHHHHHHHHHHHHHHHHHHHHM" + \
+                     "MHHHHHHCHHHHHRHHHHRHHM" + \
+                     "MHHHHHHHHHHHHHHHHHHHHM" + \
+                     "MHHHHHRHRHRHRHHHHRHHHM" + \
+                     "MHHHHHHHHHHHHHHHHRHHHM" + \
+                     "MHHHHHRRRHHHHHHOHHRHHM" + \
+                     "MHHHHHRORHHHHHHHHRHHHM" + \
+                     "MHHHHHRRRHHHHHHHHRHHHM" + \
+                     "MHHHHHHHOHHHHHHHHRHHHM" + \
+                     "MMMMMMMMMMMMMMHHHRHHHM" + \
+                     "MHHHHHHHHHHHHHHHHRHHHM" + \
+                     "MHHHHHHHHHHHHHHHOHHHHM" + \
+                     "MHHHHHHHHHHMMMMMMMMMMM" + \
+                     "MHHHHHHOHHHHHHHHHHHHOM" + \
+                     "MMMMMMMMMMMMMMMMMMMMMM")
 
 # niveau 2
 niveau_nb_x.append (22)
@@ -156,61 +157,61 @@ def init_tableau(niv):
 
 # ---- dessin initial du tableau
 def dessine_croco(x,y):
-    global drawing_canvas
+    global canvas_dessin
     global taille_case
     global image_croco_g
     global image_croco_d
     global croco_dir
-    #drawing_canvas.create_rectangle(x * taille_case, y * taille_case, (x + 1) * taille_case, (y + 1) * taille_case, fill="red")
+    #canvas_dessin.create_rectangle(x * taille_case, y * taille_case, (x + 1) * taille_case, (y + 1) * taille_case, fill="red")
     if croco_dir == "G":
-        drawing_canvas.create_image(x * taille_case, y * taille_case, anchor=tkinter.NW, image=image_croco_g)
+        canvas_dessin.create_image(x * taille_case, y * taille_case, anchor=tkinter.NW, image=image_croco_g)
     else:
-        drawing_canvas.create_image(x * taille_case, y * taille_case, anchor=tkinter.NW, image=image_croco_d)
+        canvas_dessin.create_image(x * taille_case, y * taille_case, anchor=tkinter.NW, image=image_croco_d)
     
 def dessine_croco_mort(x,y):
-    global drawing_canvas
+    global canvas_dessin
     global taille_case
     global image_mort
-    drawing_canvas.create_rectangle(x * taille_case, y * taille_case, (x + 1) * taille_case, (y + 1) * taille_case, fill="red")
-    drawing_canvas.create_image(x * taille_case, y * taille_case, anchor=tkinter.NW, image=image_croco_mort)
+    canvas_dessin.create_rectangle(x * taille_case, y * taille_case, (x + 1) * taille_case, (y + 1) * taille_case, fill="red")
+    canvas_dessin.create_image(x * taille_case, y * taille_case, anchor=tkinter.NW, image=image_croco_mort)
 
 def dessine_mur(x,y):
-    global drawing_canvas
+    global canvas_dessin
     global taille_case
     global image_mur
-    #drawing_canvas.create_rectangle(x * taille_case, y * taille_case, (x + 1) * taille_case, (y + 1) * taille_case, fill="#404040")
-    drawing_canvas.create_image(x * taille_case, y * taille_case, anchor=tkinter.NW, image=image_mur)
+    #canvas_dessin.create_rectangle(x * taille_case, y * taille_case, (x + 1) * taille_case, (y + 1) * taille_case, fill="#404040")
+    canvas_dessin.create_image(x * taille_case, y * taille_case, anchor=tkinter.NW, image=image_mur)
 
 def dessine_herbe(x,y):
-    global drawing_canvas
+    global canvas_dessin
     global taille_case
     global image_herbe
-    #drawing_canvas.create_rectangle(x * taille_case, y * taille_case, (x + 1) * taille_case, (y + 1) * taille_case, fill="green")
-    drawing_canvas.create_image(x * taille_case, y * taille_case, anchor=tkinter.NW, image=image_herbe)
+    #canvas_dessin.create_rectangle(x * taille_case, y * taille_case, (x + 1) * taille_case, (y + 1) * taille_case, fill="green")
+    canvas_dessin.create_image(x * taille_case, y * taille_case, anchor=tkinter.NW, image=image_herbe)
 
 def dessine_rocher(x,y):
-    global drawing_canvas
+    global canvas_dessin
     global taille_case
     global image_rocher
-    #drawing_canvas.create_oval(x * taille_case, y * taille_case, (x + 1) * taille_case, (y + 1) * taille_case, fill="grey")
-    drawing_canvas.create_image(x * taille_case, y * taille_case, anchor=tkinter.NW, image=image_rocher)
+    #canvas_dessin.create_oval(x * taille_case, y * taille_case, (x + 1) * taille_case, (y + 1) * taille_case, fill="grey")
+    canvas_dessin.create_image(x * taille_case, y * taille_case, anchor=tkinter.NW, image=image_rocher)
 
 def dessine_oeuf(x,y):
-    global drawing_canvas
+    global canvas_dessin
     global taille_case
     global image_oeuf
-    drawing_canvas.create_image(x * taille_case, y * taille_case, anchor=tkinter.NW, image=image_oeuf)
+    canvas_dessin.create_image(x * taille_case, y * taille_case, anchor=tkinter.NW, image=image_oeuf)
 
 def dessine_vide(x,y):
-    global drawing_canvas
+    global canvas_dessin
     global taille_case
-    drawing_canvas.create_rectangle(x * taille_case, y * taille_case, (x + 1) * taille_case, (y + 1) * taille_case, fill="black")
+    canvas_dessin.create_rectangle(x * taille_case, y * taille_case, (x + 1) * taille_case, (y + 1) * taille_case, fill="black")
 
 def dessine_tableau():
     global nb_x
     global nb_y
     global taille_case
-    global drawing_canvas
+    global canvas_dessin
     global label_niveau
     global label_nb_oeufs
     global label_nb_vies
@@ -219,7 +220,7 @@ def dessine_tableau():
     global nb_oeufs_restants
 
     # Dimensionne le canvas à la valeur nécessaire au niveau actuel
-    drawing_canvas.config(width=taille_case*nb_x, height=taille_case*nb_y)
+    canvas_dessin.config(width=taille_case*nb_x, height=taille_case*nb_y)
 
     # dessine chaque case du tableau
     for x in range(nb_x):
@@ -251,7 +252,7 @@ def attrape_oeuf():
     global nb_oeufs_restants
     global fenetre
     global label_nb_oeufs
-    global drawing_canvas
+    global canvas_dessin
     global taille_case
     global croco_x
     global croco_y
@@ -261,10 +262,10 @@ def attrape_oeuf():
     label_nb_oeufs.config(text="Oeufs restants: {:d}".format(nb_oeufs_restants))
 
     # Effet visuel: MIAM !!
-    text = drawing_canvas.create_text (croco_x * taille_case, croco_y * taille_case, text="MIAM !!", fill="red", font=tkinter.font.Font(family='Arial', size=32))
+    text = canvas_dessin.create_text (croco_x * taille_case, croco_y * taille_case, text="MIAM !!", fill="red", font=tkinter.font.Font(family='Arial', size=32))
     fenetre.update()
     time.sleep(0.5)
-    drawing_canvas.delete(text)
+    canvas_dessin.delete(text)
 
     # si c'était le dernier oeuf, on a réussi ce niveau
     if nb_oeufs_restants == 0:
@@ -289,7 +290,7 @@ def gagne():
 # ---- deplacement du croco
 def bouge(event):
     global croco
-    global drawing_canvas
+    global canvas_dessin
     global fenetre
     global croco_x
     global croco_y
@@ -470,18 +471,15 @@ def quitter():
 # ---------- programme principal
 if __name__ == '__main__':
 
-    # ---- Main Window
+    # ---- fenêtre principale
     fenetre = tkinter.Tk()
     fenetre.title('Crocobill')
-    fenetre.config(bg="#404050")
+    fenetre.config(bg=couleur_fond)
     fenetre.resizable(width=False, height=False)    # on empeche le redimensionnement manuel de la fenetre
 
-    # ---- Drawing frame et canvas
-    drawing_frame = tkinter.Frame(fenetre, bg="black")
-    drawing_frame.pack(padx=20, pady=20)
-
-    drawing_canvas = tkinter.Canvas(drawing_frame, bg="black")
-    drawing_canvas.pack()
+    # ---- canvas pour dessiner
+    canvas_dessin = tkinter.Canvas(fenetre, bg="black")
+    canvas_dessin.pack(padx=20, pady=20)
 
     # ---- Charge les images GIF
     image_mur        = tkinter.PhotoImage(file="images/mur.gif")
@@ -496,23 +494,23 @@ if __name__ == '__main__':
     init_tableau(niveau_actuel)
 
     # ---- Une frame en bas pour afficher des infos et bouton quitter
-    frame_bas = tkinter.Frame(fenetre, bg="#404050")
+    frame_bas = tkinter.Frame(fenetre, bg=couleur_fond)
     frame_bas.pack(fill=tkinter.X, padx=20, pady=0)
 
     #relief=tkinter.RIDGE, 
-    label_niveau = tkinter.Label(frame_bas, text="", font=tkinter.font.Font(family='Arial', size=20), bg="#404050", fg="#00F000")
+    label_niveau = tkinter.Label(frame_bas, text="", font=tkinter.font.Font(family='Arial', size=20), bg=couleur_fond, fg=couleur_labels)
     label_niveau.grid(row=0, column=0, padx=5, pady=0)
 
-    label_nb_oeufs = tkinter.Label(frame_bas, text="", font=tkinter.font.Font(family='Arial', size=20), bg="#404050", fg="#00F000")
+    label_nb_oeufs = tkinter.Label(frame_bas, text="", font=tkinter.font.Font(family='Arial', size=20), bg=couleur_fond, fg=couleur_labels)
     label_nb_oeufs.grid(row=0, column=1, padx=5, pady=0)
 
-    label_nb_vies = tkinter.Label(frame_bas, text="", font=tkinter.font.Font(family='Arial', size=20), bg="#404050", fg="#00F000")
+    label_nb_vies = tkinter.Label(frame_bas, text="", font=tkinter.font.Font(family='Arial', size=20), bg=couleur_fond, fg=couleur_labels)
     label_nb_vies.grid(row=0, column=2, padx=5, pady=0)
 
-    boutton_recommencer = tkinter.Button(frame_bas, text=" Recommencer ", font=tkinter.font.Font(family='Arial', size=20), bg="#404050", fg="black", command=recommencer)
+    boutton_recommencer = tkinter.Button(frame_bas, text=" Recommencer ", font=tkinter.font.Font(family='Arial', size=20), bg=couleur_fond, fg="black", command=recommencer)
     boutton_recommencer.grid(row=0, column=3, padx=5, pady=0)
 
-    boutton_quitter = tkinter.Button(frame_bas, text=" Quitter ", font=tkinter.font.Font(family='Arial', size=20), bg="#404050", fg="black", command=quitter)
+    boutton_quitter = tkinter.Button(frame_bas, text=" Quitter ", font=tkinter.font.Font(family='Arial', size=20), bg=couleur_fond, fg="black", command=quitter)
     boutton_quitter.grid(row=0, column=4, padx=5, pady=0)
 
     frame_bas.columnconfigure(0, weight=1)
@@ -522,7 +520,7 @@ if __name__ == '__main__':
     frame_bas.columnconfigure(4, weight=1)
 
     # juste pour afficher un espace sous la frame précédente
-    tkinter.Frame(fenetre, bg="#404050").pack(fill=tkinter.X, padx=20, pady=10)
+    tkinter.Frame(fenetre, bg=couleur_fond).pack(fill=tkinter.X, padx=20, pady=10)
 
     # ---- On affiche le tableau à l'écran
     dessine_tableau()
