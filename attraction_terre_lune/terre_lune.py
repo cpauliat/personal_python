@@ -22,9 +22,8 @@
 #
 # ---------- modules
 import tkinter 
-from tkinter.font import *
+import tkinter.font
 import math
-import time
 
 # ---------- paramètres initiaux
 
@@ -106,11 +105,11 @@ def dessine_axes():
     # perigee
     drawing_canvas.create_line (xe_lune_perigee - 5, ye_lune_perigee - 5, xe_lune_perigee + 5, ye_lune_perigee + 5, fill="red")
     drawing_canvas.create_line (xe_lune_perigee - 5, ye_lune_perigee + 5, xe_lune_perigee + 5, ye_lune_perigee - 5, fill="red")
-    label_perigee = tkinter.Label(drawing_canvas, text="périgée", font=Font(family='Arial', size=16), bg="black", fg="red")
+    label_perigee = tkinter.Label(drawing_canvas, text="périgée", font=tkinter.font.Font(family='Arial', size=16), bg="black", fg="red")
     drawing_canvas.create_window (xe_lune_perigee + 15, ye_lune_perigee - 50, window=label_perigee, anchor=tkinter.NW)
 
     # apogee
-    label_apogee = tkinter.Label(drawing_canvas, text="apogée", font=Font(family='Arial', size=16), bg="black", fg="red")
+    label_apogee = tkinter.Label(drawing_canvas, text="apogée", font=tkinter.font.Font(family='Arial', size=16), bg="black", fg="red")
     drawing_canvas.create_window (xe_lune_perigee + 15, ye_max - 40, window=label_apogee, anchor=tkinter.NW)
 
 def dessine_terre():
@@ -284,7 +283,7 @@ if __name__ == '__main__':
 
     # ---- Label pour afficher les paramètres lunaires
     message=""
-    label = tkinter.Label(drawing_canvas, text=message, font=Font(family='Courier new', size=14), justify=tkinter.LEFT, bg="black", fg="yellow")
+    label = tkinter.Label(drawing_canvas, text=message, font=tkinter.font.Font(family='Courier new', size=14), justify=tkinter.LEFT, bg="black", fg="yellow")
     drawing_canvas.create_window (20, ye_max - 210, window=label, anchor=tkinter.NW)
 
     # ---- Charge les images GIF
@@ -302,7 +301,7 @@ if __name__ == '__main__':
     dessine_lune()
    
     # ---- rajout des boutons dans le canvas
-    t_dt   = drawing_canvas.create_text  (30, 40, anchor=tkinter.NW, text="Rafraichissement toutes les {:d} ms".format(timer), font=Font(family='Courier New', size=14), fill="yellow")
+    t_dt   = drawing_canvas.create_text  (30, 40, anchor=tkinter.NW, text="Rafraichissement toutes les {:d} ms".format(timer), font=tkinter.font.Font(family='Courier New', size=14), fill="yellow")
 
     bt_vitesse_p = tkinter.Button (main_window, text="Accélérer", height=2, width=10, command=lambda: modifie_vitesse("+", t_dt))
     bt_vitesse_m = tkinter.Button (main_window, text="Ralentir",  height=2, width=10, command=lambda: modifie_vitesse("-", t_dt))
