@@ -17,7 +17,6 @@
 #    2020-04-19: ajout affichage du bas et bouton quitter
 # --------------------------------------------------------------------------------------------------------------------------
 #
-# TO DO: enlever le bord blanc autour du canvas_dessin
 # TO DO: remettre focus sur fenetre principale apres fermeture d'une fenetre messagebox
 #
 # ---------- modules
@@ -478,7 +477,7 @@ if __name__ == '__main__':
     fenetre.resizable(width=False, height=False)    # on empeche le redimensionnement manuel de la fenetre
 
     # ---- canvas pour dessiner
-    canvas_dessin = tkinter.Canvas(fenetre, bg="black")
+    canvas_dessin = tkinter.Canvas(fenetre, bg="black", highlightthickness=0)
     canvas_dessin.pack(padx=20, pady=20)
 
     # ---- Charge les images GIF
