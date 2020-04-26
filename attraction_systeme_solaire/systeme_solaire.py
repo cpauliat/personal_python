@@ -332,6 +332,9 @@ if __name__ == '__main__':
     terre   = planete (nom="Terre",   a=149.6e9,    e=0.016711236, ech=echelle, xes=xe_soleil, yes=ye_soleil, dt=delta_temps)
     mars    = planete (nom="Mars",    a=227.944e9,  e=0.09339,     ech=echelle, xes=xe_soleil, yes=ye_soleil, dt=delta_temps)
     jupiter = planete (nom="Jupiter", a=778.340e9,  e=0.04839,     ech=echelle, xes=xe_soleil, yes=ye_soleil, dt=delta_temps)
+    saturne = planete (nom="Saturne", a=1426.7e9,   e=0.0539,      ech=echelle, xes=xe_soleil, yes=ye_soleil, dt=delta_temps)
+    uranus  = planete (nom="Uranus",  a=2870.7e9,   e=0.04726,     ech=echelle, xes=xe_soleil, yes=ye_soleil, dt=delta_temps)
+    neptune = planete (nom="Neptune", a=4498.4e9,   e=0.00859,     ech=echelle, xes=xe_soleil, yes=ye_soleil, dt=delta_temps)
 
     # ---- Affiche l'animation des planetes
     animation_demarre(mercure, "images/mercure.gif")
@@ -339,6 +342,9 @@ if __name__ == '__main__':
     animation_demarre(terre,   "images/terre.gif")
     animation_demarre(mars,    "images/mars.gif")
     animation_demarre(jupiter, "images/jupiter.gif")
+    animation_demarre(saturne, "images/jupiter.gif")
+    animation_demarre(uranus,  "images/jupiter.gif")
+    animation_demarre(neptune, "images/jupiter.gif")
 
     # ---- Boucle de la fenetre graphique
     main_window.mainloop()

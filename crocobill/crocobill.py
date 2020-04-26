@@ -15,9 +15,8 @@
 # Versions
 #    2020-04-11: version initiale
 #    2020-04-19: ajout affichage du bas et bouton quitter
+#    2020-04-26: remise du focus sur fenetre principale apres disparition des fenetres popups
 # --------------------------------------------------------------------------------------------------------------------------
-#
-# TO DO: remettre focus sur fenetre principale apres fermeture d'une fenetre messagebox
 #
 # ---------- modules
 import tkinter 
@@ -281,7 +280,7 @@ def gagne():
         niveau_actuel += 1
         init_tableau(niveau_actuel)
         dessine_tableau()
-        #fenetre.focus_set()     # on met le focus la fenetre principale pour éviter de devoir cliquer dans la fenetre avant de jouer
+        fenetre.grab_set()     # on met le focus la fenetre principale pour éviter de devoir cliquer dans la fenetre avant de jouer
     else:
         tkinter.messagebox.showinfo("Gagné","Bravo ! Vous avez réussi le dernier niveau\n\nCliquer OK pour sortir du programme")
         exit (0)
@@ -449,7 +448,7 @@ def croco_perd_une_vie():
         tkinter.messagebox.showinfo("Une vie perdue", message)
         init_tableau(niveau_actuel)
         dessine_tableau()
-        #fenetre.focus_set()     # on met le focus la fenetre principale pour éviter de devoir cliquer dans la fenetre avant de jouer
+        fenetre.grab_set()     # on met le focus la fenetre principale pour éviter de devoir cliquer dans la fenetre avant de jouer
     else:
         tkinter.messagebox.showinfo("Perdu","Le croco a perdu toutes ses vies.\n\nCliquer OK pour sortir du programme")
         exit (2)    
@@ -457,10 +456,13 @@ def croco_perd_une_vie():
 # ---- On recommence le niveau actuel après confirmation
 def recommencer():
     global niveau_actuel
+    global fenetre
 
     if tkinter.messagebox.askyesno("On recommence","Voulez-vous vraiment recommencer le niveau actuel ?"): 
         init_tableau(niveau_actuel)
         dessine_tableau()
+    
+    fenetre.grab_set()     # on met le focus la fenetre principale pour éviter de devoir cliquer dans la fenetre avant de jouer
 
 # ---- Fin du programme après confirmation
 def quitter():
