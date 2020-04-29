@@ -104,7 +104,7 @@ class liste_vocabulaire:
         self.expr_fr=[]
         self.expr_et=[]
                   
-        fichier=codecs.open(nom_fichier,'r',encoding='utf-8')        
+        fichier=open(nom_fichier,'r',encoding='utf-8')        
         
         for ligne in fichier.read().split('\n'):
             # si 0 ou +de 2 carac ; dans la ligne, on sort (fichier corrompu)
@@ -271,7 +271,7 @@ class tester_voca():
                 if (self.entry[i].get() != self.liste.et(i)):
                     ligne_stats+=";"+self.liste.fr(i)+";"+self.liste.et(i)
                 
-        fic_stats=codecs.open(FICHIER_STATS,'a',encoding='utf-8')     
+        fic_stats=open(FICHIER_STATS,'a',encoding='utf-8')     
         fic_stats.write(ligne_stats+"\n")
         fic_stats.close()
         
@@ -482,7 +482,7 @@ def sauver_liste(text, fenetre, bt1, lab):
     lab.config(text=nom_fichier)
     
     # -- on sauve la liste
-    fichier=codecs.open(nom_fichier,'w',encoding='utf-8')
+    fichier=open(nom_fichier,'w',encoding='utf-8')
     fichier.write(chaine_corrigee)
     fichier.close   
         
