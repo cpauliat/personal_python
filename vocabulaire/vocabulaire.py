@@ -506,12 +506,13 @@ def toplevel_editer(action):
         # D'abord, on charge une liste depuis un fichier
         myFormats = [ ('Vocabulaire','*.voc') ]
     
-        fichier = tkinter.filedialog.askopenfile(parent=fenetre_principale,mode='r',initialdir=FOLDER_VOCA,filetypes=myFormats,title='Choisis une liste de vocabulaire')        
-        if fichier == None:
+        nom_fichier = tkinter.filedialog.askopenfilename(parent=fenetre_principale,initialdir=FOLDER_VOCA,filetypes=myFormats,title='Choisis une liste de vocabulaire')        
+        try:
+            fichier=open(nom_fichier,'r',encoding='utf-8')        
+        except:
             return
     
         chaine=fichier.read()
-        nom_fichier=fichier.name
         fichier.close()    
     else:
         nom_fichier=""
