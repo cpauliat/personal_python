@@ -15,6 +15,7 @@
 #    2017-01-18: Version initiale developpe avec Python 2 et testee sur Linux et Windows
 #    2020-04-04: Conversion en Python 3
 #    2020-04-05: Rajout du support de MacOS
+#    2020-04-29: Correction bug encodage UTF-8 sur Windows
 # --------------------------------------------------------------------------------------------------------------------------
 
 __author__ = "cpauliat"
