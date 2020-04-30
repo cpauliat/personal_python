@@ -627,9 +627,9 @@ if __name__ == "__main__":
         
     # bouton Quitter
     if (operating_system == "MacOS"):
-        bt_quitter=Button(frame_principale, text="QUITTER", highlightbackground="#D0D0D0", activebackground="#707070", font=my_font2, relief="flat", command=fenetre_principale.quit)
+        bt_quitter=Button(frame_principale, text="QUITTER", highlightbackground="#D0D0D0", activebackground="#707070", font=my_font2, relief="flat", command=fenetre_principale.destroy)
     else:
-        bt_quitter=Button(frame_principale, text="QUITTER", bg="#D0D0D0", activebackground="#707070", font=my_font2, relief="flat", command=fenetre_principale.quit)
+        bt_quitter=Button(frame_principale, text="QUITTER", bg="#D0D0D0", activebackground="#707070", font=my_font2, relief="flat", command=fenetre_principale.destroy)
     bt_quitter.grid(row=2, column=0, columnspan=2, sticky=W+E+N+S, padx=my_pad, pady=my_pad)
         
     fenetre_principale.mainloop()
