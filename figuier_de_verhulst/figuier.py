@@ -19,8 +19,8 @@ def un(r):
     for i in range(10000):
         un = r * un * (1 - un)
 
-    # get last 10 values
-    for i in range(10):
+    # get last values
+    for i in range(max_values):
         un = r * un * (1 - un)
         limits.append(format(un, '.5f'))
 
@@ -58,15 +58,16 @@ def dessine_figuier(start, end, precision):
 if __name__ == '__main__':
 
     # ---- variables
-    start = 0
+    start = 1
     end = 4
-    precision = 8000
-    largeur_canvas = 3400
-    hauteur_canvas = 1200
+    precision = 200
+    largeur_canvas = 1900
+    hauteur_canvas = 900
     espace_axes = 50
     couleur_fond = "#4040D0"
     couleur_axe = "white"
     couleur_points = "red"
+    max_values = 100
 
     # ---- fenêtre principale
     fenetre = tkinter.Tk()
