@@ -13,6 +13,7 @@
 import tkinter 
 import tkinter.font
 import tkinter.messagebox
+import tkinter.ttk
 import math
 import time
 import random
@@ -103,6 +104,34 @@ def mandelbrot_color(x,y):
         color_index = int(cpt / cpt_max * nb_colors)
         return colors [color_index] 
 
+def mandelbrot3_color(x,y):
+    # Zn = Xn + i * Yn
+    xn = yn = 0     # z0 = 0
+    cx  = x
+    cy  = y 
+
+    cpt = 0
+
+    modzn2 = 0      # module de Zn au carré (= Xn^2 + Yn^2)
+    while (cpt < cpt_max) and (xn * xn + yn * yn <= 4):
+        # Zn+1 = Zn^2 + c
+        # Zn   = Xn + i * Yn
+        # c    = Cx + i * Cy
+        # Zn+1 = Xn+1 + i * Yn+1
+        # Xn+1 = Xn^2 - Yn^2 + Cx
+        # Yn+1 = 2 * Xn * Yn + Cy
+        xnp1 = xn * xn - yn * yn + cx
+        ynp1 = 2 * xn * yn + cy
+        xn = xnp1
+        yn = ynp1
+        cpt += 1
+
+    if cpt == cpt_max:
+        return "black"
+    else:
+        color_index = int(cpt / cpt_max * nb_colors)
+        return colors [color_index] 
+
 def x_to_xecran(x):
     return int((x - xmin) / (xmax - xmin) * largeur_canvas)
 
@@ -134,11 +163,12 @@ def enable_buttons():
     cc_precis_button["state"] = tkinter.NORMAL
 
 def dessine_mandelbrot(xprecision, yprecision):
-    global calcul_termine
+    global calcul_en_cours
     global selected_rectangle
     global canvas_dessin
 
     print (f"Calcul démarré")
+    calcul_en_cours = True
     disable_buttons()
     calcul_en_cours_tv.set("CALCUL EN COURS\n\n0%")
     fenetre.update()
@@ -168,7 +198,7 @@ def dessine_mandelbrot(xprecision, yprecision):
 
     canvas_dessin.update()
 
-    calcul_termine = True
+    calcul_en_cours = False
     calcul_en_cours_tv.set("\n\n")
     enable_buttons()
 
@@ -197,7 +227,7 @@ def affiche_position_souris_in_canvas(event):
     global current_pos_tv
 
     # aucune action possible si calcul/affichage en cours
-    if not(calcul_termine):
+    if calcul_en_cours:
         return
 
     xe = event.x
@@ -216,14 +246,14 @@ def select_area_start(event):
     global ysel1
 
     # aucune action possible si calcul/affichage en cours
-    if not(calcul_termine):
+    if calcul_en_cours:
         return
 
     selected_area_x1 = selected_area_x2 = event.x
     selected_area_y1 = selected_area_y2 = event.y
     xsel1 = xecran_to_x(selected_area_x1)
     ysel1 = yecran_to_y(selected_area_y1)
-    selected_area_tv.set(f"ZONE SELECTIONNEE:\n\nx1 : {xsel1: .12f}\n\ny1 : {ysel1: .12f}\n\n \n\n ")
+    selected_area_tv.set(f"ZONE SELECTIONNEE:\n\nx1 : {xsel1: .12f}\n\ny1 : {ysel1: .12f}\n\nx2 : \n\ny2 : ")
     selected_rectangle = canvas_dessin.create_rectangle(selected_area_x1, selected_area_y1, selected_area_x1 + 1, selected_area_y1 + 1, fill="", outline = "white")
 
 def select_area_change(event):
@@ -236,7 +266,7 @@ def select_area_change(event):
     global ysel2
 
     # aucune action possible si calcul/affichage en cours
-    if not(calcul_termine):
+    if calcul_en_cours:
         return
 
     selected_area_x2 = event.x
@@ -260,10 +290,11 @@ def select_area_end(event):
     global largeur_canvas
 
     # aucune action possible si calcul/affichage en cours
-    if not(calcul_termine):
+    if calcul_en_cours:
         return
 
-    selected_area_tv.set(" \n\n \n\n \n\n \n\n ")
+    #selected_area_tv.set(" \n\n \n\n \n\n \n\n ")
+    selected_area_tv.set("ZONE SELECTIONNEE:\n\nx1 : \n\ny1 : \n\nx2 : \n\ny2 : ")
 
     selected_area_x2 = event.x
     selected_area_y2 = event.y
@@ -333,7 +364,8 @@ if __name__ == '__main__':
     colors = [ ]
     colors_palette3()
     nb_colors = len(colors)
-    calcul_termine = False
+    calcul_en_cours = False
+    calcul_rapide   = False
     couleur_boutons         = "#F04040"
     couleur_frame           = "#202020"
     couleur_texte           = "#FFFF00"
@@ -341,7 +373,6 @@ if __name__ == '__main__':
     couleur_selection       = "#00E000"
     couleur_calcul_en_cours = "red"
     selected_area_x1 = selected_area_x2 = selected_area_y1 = selected_area_y2 = -1
-    calcul_rapide = False
     xsel1 = ysel1 = xsel2 = ysel2 = 0
 
     # ---- fenêtre principale
@@ -353,15 +384,18 @@ if __name__ == '__main__':
     # ---- frame de controle
     font_cn16 = tkinter.font.Font(family='Courier new', size=16)
     font_ar18 = tkinter.font.Font(family='Arial', size=18)
+    font_ar20 = tkinter.font.Font(family='Arial', size=20, weight='bold')
     dimensions_tv      = tkinter.StringVar()
     current_pos_tv     = tkinter.StringVar()
     calcul_en_cours_tv = tkinter.StringVar()
     selected_area_tv   = tkinter.StringVar()
 
     zoom_display_area_coords()
-    current_pos_tv.set("")
+    #current_pos_tv.set(" \n\n \n\n \n\n \n\n ")
+    current_pos_tv.set("COORDONNEES SOURIS:\n\nxe : \n\nye : \n\nx  : \n\ny  : ")
     calcul_en_cours_tv.set("\n\n")
-    selected_area_tv.set(" \n\n \n\n \n\n \n\n ")
+    #selected_area_tv.set(" \n\n \n\n \n\n \n\n ")
+    selected_area_tv.set("ZONE SELECTIONNEE:\n\nx1 : \n\ny1 : \n\nx2 : \n\ny2 : ")
 
     frame_controle = tkinter.Frame(fenetre, bg=couleur_frame)
     frame_controle.pack(side=tkinter.LEFT, fill=tkinter.Y)
@@ -371,17 +405,25 @@ if __name__ == '__main__':
     zoom_out_button       = tkinter.Button(frame_controle, text = "ZOOM OUT",   font = font_ar18, height = 2, command = zoom_out)
     dimensions_label      = tkinter.Label (frame_controle, justify = tkinter.LEFT, font = font_cn16, textvariable = dimensions_tv, bg = couleur_frame, fg = couleur_texte)
     cc_precis_button      = tkinter.Button(frame_controle, text = "CALCUL PRECIS", font = font_ar18, height = 2, command = calcule_precis)
-    calcul_en_cours_label = tkinter.Label (frame_controle, justify = tkinter.CENTER, font = font_ar18, textvariable = calcul_en_cours_tv, bg = couleur_frame, fg = couleur_calcul_en_cours)
     current_pos_label     = tkinter.Label (frame_controle, justify = tkinter.LEFT, font = font_cn16, textvariable = current_pos_tv, bg = couleur_frame, fg = couleur_coords_souris)
+    calcul_en_cours_label = tkinter.Label (frame_controle, justify = tkinter.CENTER, font = font_ar20, textvariable = calcul_en_cours_tv, bg = couleur_frame, fg = couleur_calcul_en_cours)
     selected_area_label   = tkinter.Label (frame_controle, justify = tkinter.LEFT, font = font_cn16, textvariable = selected_area_tv, bg = couleur_frame, fg = couleur_selection)
+    separator1            = tkinter.ttk.Separator (frame_controle,orient='horizontal')
+    separator2            = tkinter.ttk.Separator (frame_controle,orient='horizontal')
+    separator3            = tkinter.ttk.Separator (frame_controle,orient='horizontal')
+    separator4            = tkinter.ttk.Separator (frame_controle,orient='horizontal')
 
     dimensions_label.pack     (side=tkinter.TOP, padx=20, pady=10,  fill=tkinter.X)
+    separator1.pack           (side=tkinter.TOP, padx=0,  pady=5,   fill=tkinter.X)
     quit_button.pack          (side=tkinter.TOP, padx=20, pady=10,  fill=tkinter.X)
     reset_button.pack         (side=tkinter.TOP, padx=20, pady=10,  fill=tkinter.X)
     zoom_out_button.pack      (side=tkinter.TOP, padx=20, pady=10,  fill=tkinter.X)
     cc_precis_button.pack     (side=tkinter.TOP, padx=20, pady=10,  fill=tkinter.X)
-    calcul_en_cours_label.pack(side=tkinter.TOP, padx=20, pady=10,  fill=tkinter.X)
+    separator2.pack           (side=tkinter.TOP, padx=0,  pady=5,   fill=tkinter.X)
     current_pos_label.pack    (side=tkinter.TOP, padx=20, pady=10,  fill=tkinter.X)
+    separator3.pack           (side=tkinter.TOP, padx=0,  pady=0,   fill=tkinter.X)
+    calcul_en_cours_label.pack(side=tkinter.TOP, padx=20, pady=10,  fill=tkinter.X)
+    separator4.pack           (side=tkinter.TOP, padx=0,  pady=0,   fill=tkinter.X)
     selected_area_label.pack  (side=tkinter.TOP, padx=20, pady=20,  fill=tkinter.X)
 
     # ---- canvas pour dessiner
