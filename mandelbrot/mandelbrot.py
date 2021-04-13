@@ -12,6 +12,7 @@
 # ---------- modules
 import tkinter 
 import tkinter.font
+import tkinter.messagebox
 import math
 import time
 import random
@@ -121,15 +122,26 @@ def efface_et_resize_canvas():
     canvas_dessin.delete("all")
     canvas_dessin.config(width = largeur_canvas)
     calcul_rapide = False
+
+def disable_buttons():
+    reset_button["state"] = tkinter.DISABLED
+    zoom_out_button["state"] = tkinter.DISABLED
+    cc_precis_button["state"] = tkinter.DISABLED
     
+def enable_buttons():
+    reset_button["state"] = tkinter.NORMAL
+    zoom_out_button["state"] = tkinter.NORMAL
+    cc_precis_button["state"] = tkinter.NORMAL
+
 def dessine_mandelbrot(xprecision, yprecision):
     global calcul_termine
     global selected_rectangle
     global canvas_dessin
 
     print (f"Calcul démarré")
+    disable_buttons()
     calcul_en_cours_tv.set("CALCUL EN COURS\n\n0%")
-    calcul_en_cours_label.update()
+    fenetre.update()
 
     t1 = time.time()
     t2 = t1
@@ -158,6 +170,7 @@ def dessine_mandelbrot(xprecision, yprecision):
 
     calcul_termine = True
     calcul_en_cours_tv.set("\n\n")
+    enable_buttons()
 
 def calcule_rapide():
     global calcul_rapide
@@ -176,10 +189,7 @@ def calcule_precis():
 
 def sauve_coords():
     global coords
-    coords.append (xmin)
-    coords.append (xmax)
-    coords.append (ymin)
-    coords.append (ymax)
+    coords.append ([ xmin, xmax, ymin, ymax ])
     print ("DEBUG: coords = ",coords)
 
 # ---- events souris
@@ -209,16 +219,12 @@ def select_area_start(event):
     if not(calcul_termine):
         return
 
-    selected_area_x1 = event.x
-    selected_area_y1 = event.y
-    selected_area_x2 = event.x
-    selected_area_y2 = event.y
-
+    selected_area_x1 = selected_area_x2 = event.x
+    selected_area_y1 = selected_area_y2 = event.y
     xsel1 = xecran_to_x(selected_area_x1)
     ysel1 = yecran_to_y(selected_area_y1)
     selected_area_tv.set(f"ZONE SELECTIONNEE:\n\nx1 : {xsel1: .12f}\n\ny1 : {ysel1: .12f}\n\n \n\n ")
-
-    canvas_dessin.coords(selected_rectangle, selected_area_x1, selected_area_y1, selected_area_x1 + 1, selected_area_y1 + 1)
+    selected_rectangle = canvas_dessin.create_rectangle(selected_area_x1, selected_area_y1, selected_area_x1 + 1, selected_area_y1 + 1, fill="", outline = "white")
 
 def select_area_change(event):
     global selected_area_x1
@@ -283,7 +289,7 @@ def select_area_end(event):
         calcule_rapide()
 
 def zoom_display_area_coords():
-    dimensions_tv.set(f"ZONE ECRAN:\n\nXmin : {xmin: .12f}\n\nXmax : {xmax: .12f}\n\nYmin : {ymin: .12f}\n\nYmax : {ymax: .12f}\n")
+    dimensions_tv.set(f"\nZONE ECRAN:\n\nXmin : {xmin: .12f}\n\nXmax : {xmax: .12f}\n\nYmin : {ymin: .12f}\n\nYmax : {ymax: .12f}")
 
 def zoom_reset():
     global xmin
@@ -305,10 +311,7 @@ def zoom_out():
     global ymax
     global largeur_canvas
 
-    ymax = coords.pop()
-    ymin = coords.pop()
-    xmax = coords.pop()
-    xmin = coords.pop()
+    xmin, xmax, ymin, ymax = coords.pop()
     zoom_display_area_coords()
 
     largeur_canvas = int (hauteur_canvas * (xmax - xmin) / (ymax - ymin))   # on calcule la largeur pour conserver le ratio 
@@ -317,6 +320,10 @@ def zoom_out():
 
     #print (f"DEBUG: xmin = {xmin}  xmax = {xmax}  ymin = {ymin}  ymax = {ymax}  coords = {coords}")
 
+# ---- Fin du programme après confirmation
+def quitter():
+    if tkinter.messagebox.askyesno("Fin du programme","Voulez-vous vraiment quitter l'application ?"): 
+        fenetre.destroy()
 
 # ---------- programme principal
 
@@ -330,7 +337,8 @@ if __name__ == '__main__':
     couleur_boutons         = "#F04040"
     couleur_frame           = "#202020"
     couleur_texte           = "#FFFF00"
-    couleur_selection       = "lightgreen"
+    couleur_coords_souris   = "#FF8000"
+    couleur_selection       = "#00E000"
     couleur_calcul_en_cours = "red"
     selected_area_x1 = selected_area_x2 = selected_area_y1 = selected_area_y2 = -1
     calcul_rapide = False
@@ -343,8 +351,8 @@ if __name__ == '__main__':
     fenetre.resizable(width=False, height=False)    # on empeche le redimensionnement manuel de la fenetre
 
     # ---- frame de controle
-    font_cn14 = tkinter.font.Font(family='Courier new', size=14)
-    font_ca20 = tkinter.font.Font(family='Arial', size=18)
+    font_cn16 = tkinter.font.Font(family='Courier new', size=16)
+    font_ar18 = tkinter.font.Font(family='Arial', size=18)
     dimensions_tv      = tkinter.StringVar()
     current_pos_tv     = tkinter.StringVar()
     calcul_en_cours_tv = tkinter.StringVar()
@@ -358,23 +366,23 @@ if __name__ == '__main__':
     frame_controle = tkinter.Frame(fenetre, bg=couleur_frame)
     frame_controle.pack(side=tkinter.LEFT, fill=tkinter.Y)
 
-    reset_button          = tkinter.Button(frame_controle, text = "ZOOM RESET", height = 2, width = 20, command = zoom_reset)
-    zoom_out_button       = tkinter.Button(frame_controle, text = "ZOOM OUT",   height = 2, command = zoom_out)
-    dimensions_label      = tkinter.Label (frame_controle, justify = tkinter.LEFT, font = font_cn14, textvariable = dimensions_tv, bg = couleur_frame, fg = couleur_texte)
-    cc_precis_button      = tkinter.Button(frame_controle, text = "CALCUL PRECIS", height = 2, command = calcule_precis)
-    calcul_en_cours_label = tkinter.Label (frame_controle, justify = tkinter.CENTER, font = font_ca20, textvariable = calcul_en_cours_tv, bg = couleur_frame, fg = couleur_calcul_en_cours)
-    quit_button           = tkinter.Button(frame_controle, text = "QUITTER", height = 2,  command = fenetre.destroy)
-    current_pos_label     = tkinter.Label (frame_controle, justify = tkinter.LEFT, font = font_cn14, textvariable = current_pos_tv, bg = couleur_frame, fg = couleur_texte)
-    selected_area_label   = tkinter.Label (frame_controle, justify = tkinter.LEFT, font = font_cn14, textvariable = selected_area_tv, bg = couleur_frame, fg = couleur_selection)
+    quit_button           = tkinter.Button(frame_controle, text = "QUITTER", font = font_ar18, height = 2,  command = quitter)
+    reset_button          = tkinter.Button(frame_controle, text = "ZOOM RESET", font = font_ar18, height = 2, width = 20, command = zoom_reset)
+    zoom_out_button       = tkinter.Button(frame_controle, text = "ZOOM OUT",   font = font_ar18, height = 2, command = zoom_out)
+    dimensions_label      = tkinter.Label (frame_controle, justify = tkinter.LEFT, font = font_cn16, textvariable = dimensions_tv, bg = couleur_frame, fg = couleur_texte)
+    cc_precis_button      = tkinter.Button(frame_controle, text = "CALCUL PRECIS", font = font_ar18, height = 2, command = calcule_precis)
+    calcul_en_cours_label = tkinter.Label (frame_controle, justify = tkinter.CENTER, font = font_ar18, textvariable = calcul_en_cours_tv, bg = couleur_frame, fg = couleur_calcul_en_cours)
+    current_pos_label     = tkinter.Label (frame_controle, justify = tkinter.LEFT, font = font_cn16, textvariable = current_pos_tv, bg = couleur_frame, fg = couleur_coords_souris)
+    selected_area_label   = tkinter.Label (frame_controle, justify = tkinter.LEFT, font = font_cn16, textvariable = selected_area_tv, bg = couleur_frame, fg = couleur_selection)
 
-    reset_button.pack         (side=tkinter.TOP, padx=20, pady=20,  fill=tkinter.X)
-    zoom_out_button.pack      (side=tkinter.TOP, padx=20, pady=20,  fill=tkinter.X)
-    dimensions_label.pack     (side=tkinter.TOP, padx=20, pady=0,   fill=tkinter.X)
-    cc_precis_button.pack     (side=tkinter.TOP, padx=20, pady=20,  fill=tkinter.X)
+    dimensions_label.pack     (side=tkinter.TOP, padx=20, pady=10,  fill=tkinter.X)
+    quit_button.pack          (side=tkinter.TOP, padx=20, pady=10,  fill=tkinter.X)
+    reset_button.pack         (side=tkinter.TOP, padx=20, pady=10,  fill=tkinter.X)
+    zoom_out_button.pack      (side=tkinter.TOP, padx=20, pady=10,  fill=tkinter.X)
+    cc_precis_button.pack     (side=tkinter.TOP, padx=20, pady=10,  fill=tkinter.X)
     calcul_en_cours_label.pack(side=tkinter.TOP, padx=20, pady=10,  fill=tkinter.X)
-    quit_button.pack          (side=tkinter.TOP, padx=20, pady=40,  fill=tkinter.X)
+    current_pos_label.pack    (side=tkinter.TOP, padx=20, pady=10,  fill=tkinter.X)
     selected_area_label.pack  (side=tkinter.TOP, padx=20, pady=20,  fill=tkinter.X)
-    current_pos_label.pack    (side=tkinter.TOP, padx=20, pady=20,  fill=tkinter.X)
 
     # ---- canvas pour dessiner
     xe0 = x_to_xecran(0)
@@ -382,7 +390,6 @@ if __name__ == '__main__':
     canvas_dessin = tkinter.Canvas(fenetre, bg="black", highlightthickness=0)
     canvas_dessin.pack(side=tkinter.LEFT)
     canvas_dessin.config(width=largeur_canvas, height=hauteur_canvas)
-    selected_rectangle = canvas_dessin.create_rectangle(0, 0, 0, 0, fill="", outline = "white")
 
     # ---- Events souris dans le canvas
     canvas_dessin.bind('<Motion>', affiche_position_souris_in_canvas)
