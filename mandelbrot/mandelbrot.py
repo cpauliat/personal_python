@@ -66,6 +66,7 @@ def colors_palette3():
         v = 0
         b = 50 - i//2
         colors.append(f"#{r:02x}{v:02x}{b:02x}")
+    colors.append("white")
     # on passe du rouge au vert
     for i in range(0,255,1):
         r = 255-i
@@ -156,7 +157,7 @@ def dessine_mandelbrot(xprecision, yprecision):
     canvas_dessin.update()
 
     calcul_termine = True
-    calcul_en_cours_tv.set("")
+    calcul_en_cours_tv.set("\n\n")
 
 def calcule_rapide():
     global calcul_rapide
@@ -193,7 +194,7 @@ def affiche_position_souris_in_canvas(event):
     ye = event.y
     x  = xecran_to_x(xe)
     y  = yecran_to_y(ye)
-    current_pos_tv.set(f"Coordonnées souris:\n\nxe : {xe}\n\nye : {ye}\n\nx  : {x:.6f}\n     {x:.2E}\n\ny  : {y:.6f}\n     {y:.2E}")
+    current_pos_tv.set(f"COORDONNEES SOURIS:\n\nxe : {xe}\n\nye : {ye}\n\nx  : {x: .12f}\n\ny  : {y: .12f}")
 
 def select_area_start(event):
     global selected_area_x1
@@ -201,6 +202,8 @@ def select_area_start(event):
     global selected_area_y1
     global selected_area_y2
     global selected_rectangle
+    global xsel1
+    global ysel1
 
     # aucune action possible si calcul/affichage en cours
     if not(calcul_termine):
@@ -211,6 +214,10 @@ def select_area_start(event):
     selected_area_x2 = event.x
     selected_area_y2 = event.y
 
+    xsel1 = xecran_to_x(selected_area_x1)
+    ysel1 = yecran_to_y(selected_area_y1)
+    selected_area_tv.set(f"ZONE SELECTIONNEE:\n\nx1 : {xsel1: .12f}\n\ny1 : {ysel1: .12f}\n\n \n\n ")
+
     canvas_dessin.coords(selected_rectangle, selected_area_x1, selected_area_y1, selected_area_x1 + 1, selected_area_y1 + 1)
 
 def select_area_change(event):
@@ -219,6 +226,8 @@ def select_area_change(event):
     global selected_area_y1
     global selected_area_y2
     global selected_rectangle
+    global xsel2
+    global ysel2
 
     # aucune action possible si calcul/affichage en cours
     if not(calcul_termine):
@@ -226,6 +235,10 @@ def select_area_change(event):
 
     selected_area_x2 = event.x
     selected_area_y2 = event.y
+
+    xsel2 = xecran_to_x(selected_area_x2)
+    ysel2 = yecran_to_y(selected_area_y2)
+    selected_area_tv.set(f"ZONE SELECTIONNEE:\n\nx1 : {xsel1: .12f}\n\ny1 : {ysel1: .12f}\n\nx2 : {xsel2: .12f}\n\ny2 : {ysel2: .12f}")
 
     canvas_dessin.coords(selected_rectangle, selected_area_x1, selected_area_y1, selected_area_x2, selected_area_y2)
 
@@ -243,6 +256,8 @@ def select_area_end(event):
     # aucune action possible si calcul/affichage en cours
     if not(calcul_termine):
         return
+
+    selected_area_tv.set(" \n\n \n\n \n\n \n\n ")
 
     selected_area_x2 = event.x
     selected_area_y2 = event.y
@@ -268,7 +283,7 @@ def select_area_end(event):
         calcule_rapide()
 
 def zoom_display_area_coords():
-    dimensions_tv.set(f"Xmin : {xmin:.10f}\n       {xmin:.2e}\n\nXmax : {xmax:.10f}\n       {xmax:.2e}\n\nYmin : {ymin:.10f}\n       {ymin:.2e}\n\nYmax : {ymax:.10f}\n       {ymax:.2e}")
+    dimensions_tv.set(f"ZONE ECRAN:\n\nXmin : {xmin: .12f}\n\nXmax : {xmax: .12f}\n\nYmin : {ymin: .12f}\n\nYmax : {ymax: .12f}\n")
 
 def zoom_reset():
     global xmin
@@ -312,12 +327,14 @@ if __name__ == '__main__':
     colors_palette3()
     nb_colors = len(colors)
     calcul_termine = False
-    couleur_boutons = "#F04040"
-    couleur_frame   = "#202020"
-    couleur_texte   = "#FFFF00"
+    couleur_boutons         = "#F04040"
+    couleur_frame           = "#202020"
+    couleur_texte           = "#FFFF00"
+    couleur_selection       = "lightgreen"
     couleur_calcul_en_cours = "red"
     selected_area_x1 = selected_area_x2 = selected_area_y1 = selected_area_y2 = -1
     calcul_rapide = False
+    xsel1 = ysel1 = xsel2 = ysel2 = 0
 
     # ---- fenêtre principale
     fenetre = tkinter.Tk()
@@ -331,10 +348,12 @@ if __name__ == '__main__':
     dimensions_tv      = tkinter.StringVar()
     current_pos_tv     = tkinter.StringVar()
     calcul_en_cours_tv = tkinter.StringVar()
+    selected_area_tv   = tkinter.StringVar()
 
     zoom_display_area_coords()
     current_pos_tv.set("")
-    calcul_en_cours_tv.set("")
+    calcul_en_cours_tv.set("\n\n")
+    selected_area_tv.set(" \n\n \n\n \n\n \n\n ")
 
     frame_controle = tkinter.Frame(fenetre, bg=couleur_frame)
     frame_controle.pack(side=tkinter.LEFT, fill=tkinter.Y)
@@ -342,20 +361,20 @@ if __name__ == '__main__':
     reset_button          = tkinter.Button(frame_controle, text = "ZOOM RESET", height = 2, width = 20, command = zoom_reset)
     zoom_out_button       = tkinter.Button(frame_controle, text = "ZOOM OUT",   height = 2, command = zoom_out)
     dimensions_label      = tkinter.Label (frame_controle, justify = tkinter.LEFT, font = font_cn14, textvariable = dimensions_tv, bg = couleur_frame, fg = couleur_texte)
-    #cc_rapide_button      = tkinter.Button(frame_controle, text = "CALCUL RAPIDE", height = 2, command = calcule_rapide)
     cc_precis_button      = tkinter.Button(frame_controle, text = "CALCUL PRECIS", height = 2, command = calcule_precis)
     calcul_en_cours_label = tkinter.Label (frame_controle, justify = tkinter.CENTER, font = font_ca20, textvariable = calcul_en_cours_tv, bg = couleur_frame, fg = couleur_calcul_en_cours)
     quit_button           = tkinter.Button(frame_controle, text = "QUITTER", height = 2,  command = fenetre.destroy)
     current_pos_label     = tkinter.Label (frame_controle, justify = tkinter.LEFT, font = font_cn14, textvariable = current_pos_tv, bg = couleur_frame, fg = couleur_texte)
+    selected_area_label   = tkinter.Label (frame_controle, justify = tkinter.LEFT, font = font_cn14, textvariable = selected_area_tv, bg = couleur_frame, fg = couleur_selection)
 
     reset_button.pack         (side=tkinter.TOP, padx=20, pady=20,  fill=tkinter.X)
     zoom_out_button.pack      (side=tkinter.TOP, padx=20, pady=20,  fill=tkinter.X)
     dimensions_label.pack     (side=tkinter.TOP, padx=20, pady=0,   fill=tkinter.X)
-    #cc_rapide_button.pack     (side=tkinter.TOP, padx=20, pady=20,  fill=tkinter.X)
     cc_precis_button.pack     (side=tkinter.TOP, padx=20, pady=20,  fill=tkinter.X)
     calcul_en_cours_label.pack(side=tkinter.TOP, padx=20, pady=10,  fill=tkinter.X)
-    quit_button.pack          (side=tkinter.TOP, padx=20, pady=50,  fill=tkinter.X)
-    current_pos_label.pack    (side=tkinter.TOP, padx=20, pady=10,  fill=tkinter.X)
+    quit_button.pack          (side=tkinter.TOP, padx=20, pady=40,  fill=tkinter.X)
+    selected_area_label.pack  (side=tkinter.TOP, padx=20, pady=20,  fill=tkinter.X)
+    current_pos_label.pack    (side=tkinter.TOP, padx=20, pady=20,  fill=tkinter.X)
 
     # ---- canvas pour dessiner
     xe0 = x_to_xecran(0)
