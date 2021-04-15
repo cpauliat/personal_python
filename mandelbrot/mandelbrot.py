@@ -15,6 +15,7 @@ import tkinter.font
 import tkinter.messagebox
 import tkinter.ttk
 import math
+import cmath
 import time
 import random
 
@@ -76,7 +77,7 @@ def colors_palette3():
         b = 0
         colors.append(f"#{r:02x}{v:02x}{b:02x}")
 
-def mandelbrot_color(x,y):
+def mandelbrot_color_orig(x,y):
     # Zn = Xn + i * Yn
     xn = yn = 0     # z0 = 0
     cx  = x
@@ -104,32 +105,21 @@ def mandelbrot_color(x,y):
         color_index = int(cpt / cpt_max * nb_colors)
         return colors [color_index] 
 
-def mandelbrot3_color(x,y):
-    # Zn = Xn + i * Yn
-    xn = yn = 0     # z0 = 0
-    cx  = x
-    cy  = y 
+def mandelbrot_color(x,y):
+    zn = 0
+    c  = x + y * 1j
+    n  = 0
 
-    cpt = 0
-
-    modzn2 = 0      # module de Zn au carré (= Xn^2 + Yn^2)
-    while (cpt < cpt_max) and (xn * xn + yn * yn <= 4):
+    while (n < cpt_max) and (abs(zn) <= 2):
         # Zn+1 = Zn^2 + c
-        # Zn   = Xn + i * Yn
-        # c    = Cx + i * Cy
-        # Zn+1 = Xn+1 + i * Yn+1
-        # Xn+1 = Xn^2 - Yn^2 + Cx
-        # Yn+1 = 2 * Xn * Yn + Cy
-        xnp1 = xn * xn - yn * yn + cx
-        ynp1 = 2 * xn * yn + cy
-        xn = xnp1
-        yn = ynp1
-        cpt += 1
+        #zn = zn * zn * zn * zn + c
+        zn = zn * zn * cmath.sqrt(zn) + c
+        n += 1
 
-    if cpt == cpt_max:
+    if n == cpt_max:
         return "black"
     else:
-        color_index = int(cpt / cpt_max * nb_colors)
+        color_index = int(n / cpt_max * nb_colors)
         return colors [color_index] 
 
 def x_to_xecran(x):
@@ -146,11 +136,9 @@ def yecran_to_y(ye):
 
 def efface_et_resize_canvas():
     global canvas_dessin
-    global calcul_rapide
 
     canvas_dessin.delete("all")
     canvas_dessin.config(width = largeur_canvas)
-    calcul_rapide = False
 
 def disable_buttons():
     reset_button["state"] = tkinter.DISABLED
@@ -203,18 +191,9 @@ def dessine_mandelbrot(xprecision, yprecision):
     enable_buttons()
 
 def calcule_rapide():
-    global calcul_rapide
-
     dessine_mandelbrot(5, 5)
-    calcul_rapide = True
 
 def calcule_precis():
-    global calcul_rapide
-
-    # si on n'a deja fait de calcul rapide, on le fait maintenant avant le calcul precis
-    if not(calcul_rapide):
-        calcule_rapide()
-
     dessine_mandelbrot(1, 1)
 
 def sauve_coords():
@@ -365,7 +344,6 @@ if __name__ == '__main__':
     colors_palette3()
     nb_colors = len(colors)
     calcul_en_cours = False
-    calcul_rapide   = False
     couleur_boutons         = "#F04040"
     couleur_frame           = "#202020"
     couleur_texte           = "#FFFF00"
