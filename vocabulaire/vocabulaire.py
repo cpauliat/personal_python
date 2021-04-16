@@ -1,4 +1,6 @@
 
+#!/usr/bin/env python3
+#
 # -*- coding: utf-8 -*-
 # --------------------------------------------------------------------------------------------------------------------------
 # Ce programme permet d'entrer du vocabulaire etranger et sa traduction en francais

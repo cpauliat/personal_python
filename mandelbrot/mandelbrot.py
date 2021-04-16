@@ -370,12 +370,11 @@ def redimensionne():
     calcule_rapide()
 
 # ---- Fin du programme après confirmation
-def sauve_png():
+def sauver_png():
     resultim = Image.fromarray(myarray)
     resultim.save('result.png')
 
 def quitter():
-    sauve_png()
     if tkinter.messagebox.askyesno("Fin du programme","Voulez-vous vraiment quitter l'application ?"): 
         fenetre.destroy()
 
@@ -432,7 +431,9 @@ if __name__ == '__main__':
     reset_button          = tkinter.Button(frame_controle, text = "DIMENSIONS INITIALES", font = font_ar18, height = 2, fg = "green", command = zoom_reset)
     zoom_out_button       = tkinter.Button(frame_controle, text = "   DIMENSIONS PRECEDENTES   ", font = font_ar18, height = 2, fg = "green", command = zoom_out)
     cc_precis_button      = tkinter.Button(frame_controle, text = "CALCUL PRECIS", font = font_ar18, height = 2, fg="blue", command = calcule_precis)
-    quit_button           = tkinter.Button(frame_controle, text = "QUITTER", font = font_ar18, height = 2,  fg="red",command = quitter)
+    save_quit_frame       = tkinter.Frame (frame_controle, bg="red")
+    save_button           = tkinter.Button(save_quit_frame, text = "SAUVER", font = font_ar18, height = 2,  fg="green", command = sauver_png)
+    quit_button           = tkinter.Button(save_quit_frame, text = "QUITTER", font = font_ar18, height = 2,  fg="red",command = quitter)
     current_pos_label     = tkinter.Label (frame_controle, justify = tkinter.LEFT, font = font_cn16, textvariable = current_pos_tv, bg = couleur_frame, fg = couleur_coords_souris)
     calcul_en_cours_label = tkinter.Label (frame_controle, justify = tkinter.CENTER, font = font_ar20, textvariable = calcul_en_cours_tv, bg = couleur_frame, fg = couleur_calcul_en_cours)
     selected_area_label   = tkinter.Label (frame_controle, justify = tkinter.LEFT, font = font_cn16, textvariable = selected_area_tv, bg = couleur_frame, fg = couleur_selection)
@@ -444,11 +445,12 @@ if __name__ == '__main__':
     dimensions_label.pack     (side=tkinter.TOP, padx=20, pady=10,  fill=tkinter.X)
     dimensions_frame.pack     (side=tkinter.TOP, padx=20, pady=0,   fill=tkinter.X)
     redimensionne_button.pack (side=tkinter.TOP, padx=20, pady=10,  fill=tkinter.X)
-#    separator1.pack           (side=tkinter.TOP, padx=0,  pady=5,   fill=tkinter.X)
     reset_button.pack         (side=tkinter.TOP, padx=20, pady=10,  fill=tkinter.X)
     zoom_out_button.pack      (side=tkinter.TOP, padx=20, pady=10,  fill=tkinter.X)
     cc_precis_button.pack     (side=tkinter.TOP, padx=20, pady=10,  fill=tkinter.X)
-    quit_button.pack          (side=tkinter.TOP, padx=20, pady=10,  fill=tkinter.X)
+    save_quit_frame.pack      (side=tkinter.TOP, padx=10, pady=10,  fill=tkinter.X)
+    save_button.grid          (sticky=tkinter.N+tkinter.W, column=0, row=0, padx=10)    
+    quit_button.grid          (sticky=tkinter.N+tkinter.W+tkinter.E, column=1, row=0, padx=10)
     separator2.pack           (side=tkinter.TOP, padx=0,  pady=5,   fill=tkinter.X)
     current_pos_label.pack    (side=tkinter.TOP, padx=20, pady=10,  fill=tkinter.X)
     separator3.pack           (side=tkinter.TOP, padx=0,  pady=0,   fill=tkinter.X)
