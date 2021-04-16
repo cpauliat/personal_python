@@ -14,6 +14,7 @@ import tkinter
 import tkinter.font
 import tkinter.messagebox
 import tkinter.ttk
+import tkinter.filedialog
 import math
 import cmath
 import time
@@ -141,6 +142,9 @@ def yecran_to_y(ye):
 def efface_et_resize_canvas():
     global canvas_dessin
 
+    # on peut sauver une image seulement apres un calcul précis
+    save_button["state"] = tkinter.DISABLED
+
     canvas_dessin.delete("all")
     canvas_dessin.config(width = largeur_canvas)
 
@@ -148,13 +152,11 @@ def disable_buttons():
     redimensionne_button["state"] = tkinter.DISABLED
     reset_button        ["state"] = tkinter.DISABLED
     zoom_out_button     ["state"] = tkinter.DISABLED
-    cc_precis_button    ["state"] = tkinter.DISABLED
     
 def enable_buttons():
     redimensionne_button["state"] = tkinter.NORMAL
     reset_button        ["state"] = tkinter.NORMAL
     zoom_out_button     ["state"] = tkinter.NORMAL
-    cc_precis_button    ["state"] = tkinter.NORMAL
 
 def dessine_mandelbrot(xprecision, yprecision):
     global calcul_en_cours
@@ -208,8 +210,18 @@ def calcule_rapide():
     myarray = np.zeros(shape=(hauteur_canvas,largeur_canvas,3), dtype=np.uint8)
     dessine_mandelbrot(5, 5)
 
+    # apres le calcul rapide, on peut activer le bouton calcul precis
+    cc_precis_button["state"] = tkinter.NORMAL
+
 def calcule_precis():
+    # un fois le calcul precis démarré, on peut desactiver le bouton calcul precis
+    cc_precis_button["state"] = tkinter.DISABLED
+    
+    # calcul et affichage
     dessine_mandelbrot(1, 1)
+
+    # on peut sauver une image seulement apres un calcul précis
+    save_button["state"] = tkinter.NORMAL
 
 def sauve_coords():
     global coords
@@ -371,8 +383,23 @@ def redimensionne():
 
 # ---- Fin du programme après confirmation
 def sauver_png():
-    resultim = Image.fromarray(myarray)
-    resultim.save('result.png')
+    myFormats = [ ('Image PNG','*.png') ]
+    nom_fichier = tkinter.filedialog.asksaveasfilename(parent = fenetre, initialdir = "images", filetypes = myFormats, title="Choisir un nom pour le fichier PNG")
+     
+    if nom_fichier == "":
+        return
+        
+    # si le nom de fichier ne finit pas par ".png", on rajoute ce suffixe
+    if (len(nom_fichier)<4):
+        nom_fichier+=".png"
+    else:
+        suffixe=nom_fichier[len(nom_fichier)-4:len(nom_fichier)]
+        suffixe=suffixe.lower()
+        if (suffixe!=".png"):
+            nom_fichier+=".png"
+
+    mon_image = Image.fromarray(myarray)
+    mon_image.save(nom_fichier)
 
 def quitter():
     if tkinter.messagebox.askyesno("Fin du programme","Voulez-vous vraiment quitter l'application ?"): 
@@ -430,10 +457,10 @@ if __name__ == '__main__':
     redimensionne_button  = tkinter.Button(frame_controle, text = "REDIMENSIONNE", font = font_ar18, height = 2, fg = "green", command = redimensionne)
     reset_button          = tkinter.Button(frame_controle, text = "DIMENSIONS INITIALES", font = font_ar18, height = 2, fg = "green", command = zoom_reset)
     zoom_out_button       = tkinter.Button(frame_controle, text = "   DIMENSIONS PRECEDENTES   ", font = font_ar18, height = 2, fg = "green", command = zoom_out)
-    cc_precis_button      = tkinter.Button(frame_controle, text = "CALCUL PRECIS", font = font_ar18, height = 2, fg="blue", command = calcule_precis)
-    save_quit_frame       = tkinter.Frame (frame_controle, bg="red")
-    save_button           = tkinter.Button(save_quit_frame, text = "SAUVER", font = font_ar18, height = 2,  fg="green", command = sauver_png)
-    quit_button           = tkinter.Button(save_quit_frame, text = "QUITTER", font = font_ar18, height = 2,  fg="red",command = quitter)
+    cc_precis_button      = tkinter.Button(frame_controle, text = "CALCUL PRECIS", font = font_ar18, height = 2, fg="blue", state = tkinter.DISABLED, command = calcule_precis)
+    save_quit_frame       = tkinter.Frame (frame_controle, bg = couleur_frame)
+    save_button           = tkinter.Button(save_quit_frame, text = "SAUVER", font = font_ar18, height = 2,  fg="green", state = tkinter.DISABLED, command = sauver_png)
+    quit_button           = tkinter.Button(save_quit_frame, text = "QUITTER", font = font_ar18, height = 2,  fg="red", command = quitter)
     current_pos_label     = tkinter.Label (frame_controle, justify = tkinter.LEFT, font = font_cn16, textvariable = current_pos_tv, bg = couleur_frame, fg = couleur_coords_souris)
     calcul_en_cours_label = tkinter.Label (frame_controle, justify = tkinter.CENTER, font = font_ar20, textvariable = calcul_en_cours_tv, bg = couleur_frame, fg = couleur_calcul_en_cours)
     selected_area_label   = tkinter.Label (frame_controle, justify = tkinter.LEFT, font = font_cn16, textvariable = selected_area_tv, bg = couleur_frame, fg = couleur_selection)
@@ -449,7 +476,9 @@ if __name__ == '__main__':
     zoom_out_button.pack      (side=tkinter.TOP, padx=20, pady=10,  fill=tkinter.X)
     cc_precis_button.pack     (side=tkinter.TOP, padx=20, pady=10,  fill=tkinter.X)
     save_quit_frame.pack      (side=tkinter.TOP, padx=10, pady=10,  fill=tkinter.X)
-    save_button.grid          (sticky=tkinter.N+tkinter.W, column=0, row=0, padx=10)    
+    save_quit_frame.columnconfigure (0, weight = 1)
+    save_quit_frame.columnconfigure (1, weight = 1)
+    save_button.grid          (sticky=tkinter.N+tkinter.W+tkinter.E, column=0, row=0, padx=10)    
     quit_button.grid          (sticky=tkinter.N+tkinter.W+tkinter.E, column=1, row=0, padx=10)
     separator2.pack           (side=tkinter.TOP, padx=0,  pady=5,   fill=tkinter.X)
     current_pos_label.pack    (side=tkinter.TOP, padx=20, pady=10,  fill=tkinter.X)
