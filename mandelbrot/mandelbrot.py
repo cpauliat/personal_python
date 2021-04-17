@@ -2,7 +2,8 @@
 #
 # -*- coding: utf-8 -*-
 # --------------------------------------------------------------------------------------------------------------------------
-# Ce programme dessine l'ensemble de Mandelbrot et permet de zoomer dessus
+# Ce programme dessine l'ensemble de Mandelbrot et permet de zoomer dessus pour voir les détails
+# Il est possible de sauver l'image courante dans un fichier image .png
 #
 # Auteur : Christophe Pauliat
 # Date   : Avril 2021
@@ -26,7 +27,8 @@ from PIL import ImageColor
 # ---------- variables
 #hauteur_canvas, xmin, xmax, ymin, ymax = 1200, -2.2, 0.8, -0.1, 1.3
 #hauteur_canvas, xmin, xmax, ymin, ymax = 1400, -1, 0, 0, 1
-hauteur_canvas, xmin0, xmax0, ymin0, ymax0 = 1000, -2.1234567890123456, 0.8, -1.3, 1.3
+hauteur_canvas, xmin0, xmax0, ymin0, ymax0 = 1350, -2.1234567890123456, 0.8, -1.3, 1.3
+p = 2               # puissance p dans la formule: zn+1 = zn ^ p + c
 
 cpt_max = 100   # nb max d'iterations
 
@@ -37,77 +39,52 @@ xmin, xmax, ymin, ymax = xmin0, xmax0, ymin0, ymax0
 largeur_canvas = int (hauteur_canvas * (xmax - xmin) / (ymax - ymin))   # on calcule la largeur pour conserver le ratio 
 coords = []
 
+
 # ---------- fonctions
+
+def colors_degrade(c1, c2, nbcolors):
+    col = []
+    [ r1, g1, b1 ] = ImageColor.getcolor(c1,"RGB")
+    [ r2, g2, b2 ] = ImageColor.getcolor(c2,"RGB")
+
+    dr = (r2 - r1) / nbcolors
+    dg = (g2 - g1) / nbcolors
+    db = (b2 - b1) / nbcolors
+    for i in range(nbcolors + 1):
+        r = int(r1 + i * dr)
+        g = int(g1 + i * dg)
+        b = int(b1 + i * db)
+        col.append(f"#{r:02x}{g:02x}{b:02x}")
+        
+    return col
+
+def colors_palette0():
+    colors.extend(colors_degrade("black","black",10))
+
 def colors_palette1():
-    for i in range(40):
-        r = random.randint(0,255)
-        v = random.randint(0,255)
-        b = random.randint(0,255)
-        colors.append(f"#{r:02x}{v:02x}{b:02x}")
+    colors.extend(colors_degrade("#000032","#FA0000",100))
+    colors.extend(colors_degrade("FF0000","#00FF00",255))
 
 def colors_palette2():
-    for i in range(100,240,5):
-        r = 0
-        v = 0
-        b = i
-        colors.append(f"#{r:02x}{v:02x}{b:02x}")
-    for i in range(100,255,2):
-        r = 0
-        v = i
-        b = 0
-        colors.append(f"#{r:02x}{v:02x}{b:02x}")
-    for i in range(100,255,1):
-        r = i
-        v = 0
-        b = 0
-        colors.append(f"#{r:02x}{v:02x}{b:02x}")
+    colors.extend(colors_degrade("black","green",40))
+    colors.extend(colors_degrade("green","red",100))
+    colors.extend(colors_degrade("red","orange",200))
 
 def colors_palette3():
-    # on passe du bleu au rouge
-    # for i in range(100,255,2):
-    #     r = i
-    #     v = 0
-    #     b = 255-i
-    for i in range(0,100,1):
-        r = int(2.5*i)
-        v = 0
-        b = 50 - i//2
-        colors.append(f"#{r:02x}{v:02x}{b:02x}")
-    colors.append("white")
-    # on passe du rouge au vert
-    for i in range(0,255,1):
-        r = 255-i
-        v = i
-        b = 0
-        colors.append(f"#{r:02x}{v:02x}{b:02x}")
+    colors.extend(colors_degrade("red","darkorange",50))
+    colors.extend(colors_degrade("darkorange","yellow",100))
+    colors.extend(colors_degrade("yellow","green",200))
+    colors.extend(colors_degrade("green","darkgreen",400))
 
-def mandelbrot_color_orig(x,y):
-    # Zn = Xn + i * Yn
-    xn = yn = 0     # z0 = 0
-    cx  = x
-    cy  = y 
+# Suite: zn+1 = zn ^ p + c
+def znp1(zn, c):
+    global p
 
-    cpt = 0
-
-    modzn2 = 0      # module de Zn au carré (= Xn^2 + Yn^2)
-    while (cpt < cpt_max) and (xn * xn + yn * yn <= 4):
-        # Zn+1 = Zn^2 + c
-        # Zn   = Xn + i * Yn
-        # c    = Cx + i * Cy
-        # Zn+1 = Xn+1 + i * Yn+1
-        # Xn+1 = Xn^2 - Yn^2 + Cx
-        # Yn+1 = 2 * Xn * Yn + Cy
-        xnp1 = xn * xn - yn * yn + cx
-        ynp1 = 2 * xn * yn + cy
-        xn = xnp1
-        yn = ynp1
-        cpt += 1
-
-    if cpt == cpt_max:
-        return couleur_mandelbrot
-    else:
-        color_index = int(cpt / cpt_max * nb_colors)
-        return colors [color_index] 
+    z = zn
+    for i in range(p - 1):
+        z = z * zn
+    z = z + c
+    return z
 
 def mandelbrot_color(x,y):
     zn = 0
@@ -115,10 +92,7 @@ def mandelbrot_color(x,y):
     n  = 0
 
     while (n < cpt_max) and (abs(zn) <= 2):
-        # Zn+1 = Zn^2 + c
-        #zn = zn * zn * zn * zn + c
-        # zn = zn * zn * cmath.sqrt(zn) + c
-        zn = zn * zn + c
+        zn = znp1 (zn, c)
         n += 1
 
     if n == cpt_max:
@@ -141,12 +115,15 @@ def yecran_to_y(ye):
 
 def efface_et_resize_canvas():
     global canvas_dessin
+    global current_pos_tv
 
     # on peut sauver une image seulement apres un calcul précis
     save_button["state"] = tkinter.DISABLED
 
     canvas_dessin.delete("all")
     canvas_dessin.config(width = largeur_canvas)
+    current_pos_tv.set("COORDONNEES SOURIS:\n\nx  :                    \n\ny  : ")
+
 
 def disable_buttons():
     redimensionne_button["state"] = tkinter.DISABLED
@@ -236,11 +213,9 @@ def affiche_position_souris_in_canvas(event):
     if calcul_en_cours:
         return
 
-    xe = event.x
-    ye = event.y
-    x  = xecran_to_x(xe)
-    y  = yecran_to_y(ye)
-    current_pos_tv.set(f"COORDONNEES SOURIS:\n\nxe : {xe}\n\nye : {ye}\n\nx  : {x: .16f}\n\ny  : {y: .16f}")
+    x  = xecran_to_x(event.x)
+    y  = yecran_to_y(event.y)
+    current_pos_tv.set(f"COORDONNEES SOURIS:\n\nx  : {x: .16f}\n\ny  : {y: .16f}")
 
 def select_area_start(event):
     global selected_area_x1
@@ -260,7 +235,7 @@ def select_area_start(event):
     xsel1 = xecran_to_x(selected_area_x1)
     ysel1 = yecran_to_y(selected_area_y1)
     selected_area_tv.set(f"ZONE SELECTIONNEE:\n\nx1 : {xsel1: .16f}\n\ny1 : {ysel1: .16f}\n\nx2 : \n\ny2 : ")
-    selected_rectangle = canvas_dessin.create_rectangle(selected_area_x1, selected_area_y1, selected_area_x1 + 1, selected_area_y1 + 1, fill="", outline = "white")
+    selected_rectangle = canvas_dessin.create_rectangle(selected_area_x1, selected_area_y1, selected_area_x1 + 1, selected_area_y1 + 1, fill = "", outline = "white")
 
 def select_area_change(event):
     global selected_area_x1
@@ -299,8 +274,7 @@ def select_area_end(event):
     if calcul_en_cours:
         return
 
-    #selected_area_tv.set(" \n\n \n\n \n\n \n\n ")
-    selected_area_tv.set("ZONE SELECTIONNEE:\n\nx1 : \n\ny1 : \n\nx2 : \n\ny2 : ")
+    selected_area_tv.set("ZONE SELECTIONNEE:\n\nx1 :                    \n\ny1 : \n\nx2 : \n\ny2 : ")
 
     selected_area_x2 = event.x
     selected_area_y2 = event.y
@@ -326,7 +300,6 @@ def select_area_end(event):
         calcule_rapide()
 
 def zoom_display_area_coords():
-    #dimensions_tv.set(f"\nZONE ECRAN:\n\nXmin : {xmin: .16f}\n\nXmax : {xmax: .16f}\n\nYmin : {ymin: .16f}\n\nYmax : {ymax: .16f}")
     dimensions_tv[0].set(f"{xmin: .16f}")
     dimensions_tv[1].set(f"{xmax: .16f}")
     dimensions_tv[2].set(f"{ymin: .16f}")
@@ -433,6 +406,7 @@ if __name__ == '__main__':
     font_ar16 = tkinter.font.Font(family='Arial', size=16)
     font_ar18 = tkinter.font.Font(family='Arial', size=18)
     font_ar20 = tkinter.font.Font(family='Arial', size=20, weight='bold')
+    power_tv  = tkinter.StringVar()
     dimensions_tv = []
     for i in range (4):
         dimensions_tv.append(tkinter.StringVar())
@@ -440,59 +414,70 @@ if __name__ == '__main__':
     calcul_en_cours_tv = tkinter.StringVar()
     selected_area_tv   = tkinter.StringVar()
 
+    power_tv.set("2")
     zoom_display_area_coords()
-    current_pos_tv.set("COORDONNEES SOURIS:\n\nxe : \n\nye : \n\nx  : \n\ny  : ")
+    current_pos_tv.set("COORDONNEES SOURIS:\n\nx  :                    \n\ny  : ")
     calcul_en_cours_tv.set("")
-    selected_area_tv.set("ZONE SELECTIONNEE:\n\nx1 : \n\ny1 : \n\nx2 : \n\ny2 : ")
+    selected_area_tv.set("ZONE SELECTIONNEE:\n\nx1 :                    \n\ny1 : \n\nx2 : \n\ny2 : ")
 
-    frame_controle = tkinter.Frame(fenetre, bg=couleur_frame)
-    frame_controle.pack(side=tkinter.LEFT, fill=tkinter.Y)
+    frame_controle = tkinter.Frame(fenetre, bg = couleur_frame)
+    frame_controle.pack(side = tkinter.LEFT, fill = tkinter.Y)
 
-    dimensions_label      = tkinter.Label (frame_controle, justify = tkinter.LEFT, font = font_cn16, text = "ZONE ECRAN", bg = couleur_frame, fg = couleur_texte)
-    dimensions_frame      = tkinter.Frame(frame_controle, bg=couleur_frame)
+    formule_label   = tkinter.Label (frame_controle, anchor = tkinter.W, font = font_cn16, text = "Zn+1 = Zn ^ p + c", bg = couleur_frame, fg = couleur_selection)
+    power_frame     = tkinter.Frame (frame_controle, bg = couleur_frame)
+    power_label     = tkinter.Label (power_frame, anchor = tkinter.W, font = font_cn16, text = "p = ", bg = couleur_frame, fg = couleur_selection)
+    power_entry     = tkinter.Entry (power_frame, justify = tkinter.LEFT, font = font_cn16, width = 3, bg = couleur_frame, fg = couleur_texte, relief = tkinter.FLAT, highlightcolor = "red", textvariable = power_tv)
+    power_button    = tkinter.Button(power_frame, text = "  PUISSANCE  ", font = font_ar18, height = 2, fg = "green", command = zoom_reset)
+
+    dimensions_frame      = tkinter.Frame(frame_controle, bg = couleur_frame)
     dims_text = [ "Xmin : ", "Xmax : ", "Ymin : ", "Ymax : "]
     for i in range(4):
-        tkinter.Label (dimensions_frame, justify = tkinter.LEFT, font = font_cn16, text = dims_text[i], bg = couleur_frame, fg = couleur_texte).grid(sticky=tkinter.N+tkinter.W, column=0, row=i, pady=5)
-        tkinter.Entry (dimensions_frame, justify = tkinter.LEFT, font = font_cn16, width = 19, bg = couleur_frame, fg = couleur_texte, relief = tkinter.FLAT, highlightcolor = "red", textvariable = dimensions_tv[i]).grid(sticky=tkinter.N+tkinter.W+tkinter.E, column=1, row=i, pady=5)
+        tkinter.Label (dimensions_frame, anchor = tkinter.W, font = font_cn16, text = dims_text[i], bg = couleur_frame, fg = couleur_texte).grid(sticky = tkinter.N+tkinter.W, column=0, row=i, pady = 5)
+        tkinter.Entry (dimensions_frame, justify = tkinter.LEFT, font = font_cn16, width = 19, bg = couleur_frame, fg = couleur_texte, relief = tkinter.FLAT, highlightcolor = "red", textvariable = dimensions_tv[i]).grid(sticky = tkinter.N+tkinter.W+tkinter.E, column=1, row=i, pady = 5)
     redimensionne_button  = tkinter.Button(frame_controle, text = "REDIMENSIONNE", font = font_ar18, height = 2, fg = "green", command = redimensionne)
     reset_button          = tkinter.Button(frame_controle, text = "DIMENSIONS INITIALES", font = font_ar18, height = 2, fg = "green", command = zoom_reset)
     zoom_out_button       = tkinter.Button(frame_controle, text = "   DIMENSIONS PRECEDENTES   ", font = font_ar18, height = 2, fg = "green", command = zoom_out)
-    cc_precis_button      = tkinter.Button(frame_controle, text = "CALCUL PRECIS", font = font_ar18, height = 2, fg="blue", state = tkinter.DISABLED, command = calcule_precis)
+    cc_precis_button      = tkinter.Button(frame_controle, text = "CALCUL PRECIS", font = font_ar18, height = 2, fg = "blue", state = tkinter.DISABLED, command = calcule_precis)
     save_quit_frame       = tkinter.Frame (frame_controle, bg = couleur_frame)
-    save_button           = tkinter.Button(save_quit_frame, text = "SAUVER", font = font_ar18, height = 2,  fg="green", state = tkinter.DISABLED, command = sauver_png)
-    quit_button           = tkinter.Button(save_quit_frame, text = "QUITTER", font = font_ar18, height = 2,  fg="red", command = quitter)
+    save_button           = tkinter.Button(save_quit_frame, text = "SAUVER", font = font_ar18, height = 2,  fg = "green", state = tkinter.DISABLED, command = sauver_png)
+    quit_button           = tkinter.Button(save_quit_frame, text = "QUITTER", font = font_ar18, height = 2,  fg = "red", command = quitter)
     current_pos_label     = tkinter.Label (frame_controle, justify = tkinter.LEFT, font = font_cn16, textvariable = current_pos_tv, bg = couleur_frame, fg = couleur_coords_souris)
     calcul_en_cours_label = tkinter.Label (frame_controle, justify = tkinter.CENTER, font = font_ar20, textvariable = calcul_en_cours_tv, bg = couleur_frame, fg = couleur_calcul_en_cours)
     selected_area_label   = tkinter.Label (frame_controle, justify = tkinter.LEFT, font = font_cn16, textvariable = selected_area_tv, bg = couleur_frame, fg = couleur_selection)
-    separator1            = tkinter.ttk.Separator (frame_controle,orient='horizontal')
-    separator2            = tkinter.ttk.Separator (frame_controle,orient='horizontal')
-    separator3            = tkinter.ttk.Separator (frame_controle,orient='horizontal')
-    separator4            = tkinter.ttk.Separator (frame_controle,orient='horizontal')
+    separator1            = tkinter.ttk.Separator (frame_controle, orient = 'horizontal')
+    separator2            = tkinter.ttk.Separator (frame_controle, orient = 'horizontal')
+    separator3            = tkinter.ttk.Separator (frame_controle, orient = 'horizontal')
+    separator4            = tkinter.ttk.Separator (frame_controle, orient = 'horizontal')
 
-    dimensions_label.pack     (side=tkinter.TOP, padx=20, pady=10,  fill=tkinter.X)
-    dimensions_frame.pack     (side=tkinter.TOP, padx=20, pady=0,   fill=tkinter.X)
-    redimensionne_button.pack (side=tkinter.TOP, padx=20, pady=10,  fill=tkinter.X)
-    reset_button.pack         (side=tkinter.TOP, padx=20, pady=10,  fill=tkinter.X)
-    zoom_out_button.pack      (side=tkinter.TOP, padx=20, pady=10,  fill=tkinter.X)
-    cc_precis_button.pack     (side=tkinter.TOP, padx=20, pady=10,  fill=tkinter.X)
-    save_quit_frame.pack      (side=tkinter.TOP, padx=10, pady=10,  fill=tkinter.X)
+    formule_label.pack        (side = tkinter.TOP, padx = 20, pady = 10,  fill = tkinter.X)
+    power_frame.pack          (side = tkinter.TOP, padx = 20, pady = 10,   fill = tkinter.X)
+    power_label.pack          (side = tkinter.LEFT, padx = 0, pady = 0,   fill = tkinter.X)
+    power_entry.pack          (side = tkinter.LEFT, padx = 0, pady = 0,   fill = tkinter.X)
+    power_button.pack         (side = tkinter.LEFT, padx = 20, pady = 0,   fill = tkinter.X)
+    separator1.pack           (side = tkinter.TOP, padx = 0,  pady = 5,   fill = tkinter.X)
+    dimensions_frame.pack     (side = tkinter.TOP, padx = 20, pady = 0,   fill = tkinter.X)
+    redimensionne_button.pack (side = tkinter.TOP, padx = 20, pady = 10,  fill = tkinter.X)
+    reset_button.pack         (side = tkinter.TOP, padx = 20, pady = 10,  fill = tkinter.X)
+    zoom_out_button.pack      (side = tkinter.TOP, padx = 20, pady = 10,  fill = tkinter.X)
+    cc_precis_button.pack     (side = tkinter.TOP, padx = 20, pady = 10,  fill = tkinter.X)
+    save_quit_frame.pack      (side = tkinter.TOP, padx = 10, pady = 10,  fill = tkinter.X)
     save_quit_frame.columnconfigure (0, weight = 1)
     save_quit_frame.columnconfigure (1, weight = 1)
-    save_button.grid          (sticky=tkinter.N+tkinter.W+tkinter.E, column=0, row=0, padx=10)    
-    quit_button.grid          (sticky=tkinter.N+tkinter.W+tkinter.E, column=1, row=0, padx=10)
-    separator2.pack           (side=tkinter.TOP, padx=0,  pady=5,   fill=tkinter.X)
-    current_pos_label.pack    (side=tkinter.TOP, padx=20, pady=10,  fill=tkinter.X)
-    separator3.pack           (side=tkinter.TOP, padx=0,  pady=0,   fill=tkinter.X)
-    calcul_en_cours_label.pack(side=tkinter.TOP, padx=20, pady=10,  fill=tkinter.X)
-    separator4.pack           (side=tkinter.TOP, padx=0,  pady=0,   fill=tkinter.X)
-    selected_area_label.pack  (side=tkinter.TOP, padx=20, pady=20,  fill=tkinter.X)
+    save_button.grid          (sticky = tkinter.N+tkinter.W+tkinter.E, column=0, row=0, padx = 10)    
+    quit_button.grid          (sticky = tkinter.N+tkinter.W+tkinter.E, column=1, row=0, padx = 10)
+    separator2.pack           (side = tkinter.TOP, padx = 0,  pady = 5,   fill = tkinter.X)
+    current_pos_label.pack    (side = tkinter.TOP, padx = 20, pady = 10,  fill = tkinter.X)
+    separator3.pack           (side = tkinter.TOP, padx = 0,  pady = 0,   fill = tkinter.X)
+    calcul_en_cours_label.pack(side = tkinter.TOP, padx = 20, pady = 10,  fill = tkinter.X)
+    separator4.pack           (side = tkinter.TOP, padx = 0,  pady = 0,   fill = tkinter.X)
+    selected_area_label.pack  (side = tkinter.TOP, padx = 20, pady = 20,  fill = tkinter.X)
 
     # ---- canvas pour dessiner
     xe0 = x_to_xecran(0)
     ye0 = y_to_yecran(0)
-    canvas_dessin = tkinter.Canvas(fenetre, bg="black", highlightthickness=0)
-    canvas_dessin.pack(side=tkinter.LEFT)
-    canvas_dessin.config(width=largeur_canvas, height=hauteur_canvas)
+    canvas_dessin = tkinter.Canvas(fenetre, bg = "black", highlightthickness = 0)
+    canvas_dessin.pack(side = tkinter.LEFT)
+    canvas_dessin.config(width = largeur_canvas, height = hauteur_canvas)
 
     # ---- Events souris dans le canvas
     canvas_dessin.bind('<Motion>', affiche_position_souris_in_canvas)
