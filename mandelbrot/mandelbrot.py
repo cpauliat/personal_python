@@ -59,11 +59,11 @@ def colors_degrade(c1, c2, nbcolors):
     return col
 
 def colors_palette0():
-    colors.extend(colors_degrade("black","black",10))
+    colors.extend(colors_degrade("white","white",10))
 
 def colors_palette1():
     colors.extend(colors_degrade("#000032","#FA0000",100))
-    colors.extend(colors_degrade("FF0000","#00FF00",255))
+    colors.extend(colors_degrade("#FF0000","#00FF00",255))
 
 def colors_palette2():
     colors.extend(colors_degrade("black","green",40))
@@ -384,7 +384,7 @@ if __name__ == '__main__':
 
     # ---- other variables
     colors = [ ]
-    colors_palette3()
+    colors_palette1()
     nb_colors = len(colors)
     calcul_en_cours = False
     couleur_boutons         = "#F04040"
