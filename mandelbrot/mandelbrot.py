@@ -25,19 +25,17 @@ from PIL import Image
 from PIL import ImageColor
 
 # ---------- variables
-#hauteur_canvas, xmin, xmax, ymin, ymax = 1200, -2.2, 0.8, -0.1, 1.3
-#hauteur_canvas, xmin, xmax, ymin, ymax = 1400, -1, 0, 0, 1
-hauteur_canvas, xmin0, xmax0, ymin0, ymax0 = 1350, -2.1234567890123456, 0.8, -1.3, 1.3
-p = 2               # puissance p dans la formule: zn+1 = zn ^ p + c
-
-cpt_max = 100   # nb max d'iterations
+hauteur_canvas, xmin_initial, xmax_initial, ymin_initial, ymax_initial = 900, -2.2, 0.8, -1.3, 1.3
+p = p_initial = 2                        # puissance p dans la formule: zn+1 = zn ^ p + c
+rayon = rayon_initial = 2                # valeur du module pour laquelle on arrête les iterations
+iterations = iterations_initial = 100    # nb max d'iterations
 
 couleur_fond       = "#4040D0"
 couleur_mandelbrot = "black"
 
-xmin, xmax, ymin, ymax = xmin0, xmax0, ymin0, ymax0
+xmin, xmax, ymin, ymax = xmin_initial, xmax_initial, ymin_initial, ymax_initial
 largeur_canvas = int (hauteur_canvas * (xmax - xmin) / (ymax - ymin))   # on calcule la largeur pour conserver le ratio 
-coords = []
+params = []
 
 
 # ---------- fonctions
@@ -91,14 +89,14 @@ def mandelbrot_color(x,y):
     c  = x + y * 1j
     n  = 0
 
-    while (n < cpt_max) and (abs(zn) <= 2):
+    while (n < iterations) and (abs(zn) <= rayon):
         zn = znp1 (zn, c)
         n += 1
 
-    if n == cpt_max:
+    if n == iterations:
         return couleur_mandelbrot
     else:
-        color_index = int(n / cpt_max * nb_colors)
+        color_index = int(n / iterations * nb_colors)
         return colors [color_index] 
 
 def x_to_xecran(x):
@@ -126,14 +124,14 @@ def efface_et_resize_canvas():
 
 
 def disable_buttons():
-    redimensionne_button["state"] = tkinter.DISABLED
-    reset_button        ["state"] = tkinter.DISABLED
-    zoom_out_button     ["state"] = tkinter.DISABLED
+    valide_params_btn["state"] = tkinter.DISABLED
+    params_initiaux_btn        ["state"] = tkinter.DISABLED
+    params_precedents_btn     ["state"] = tkinter.DISABLED
     
 def enable_buttons():
-    redimensionne_button["state"] = tkinter.NORMAL
-    reset_button        ["state"] = tkinter.NORMAL
-    zoom_out_button     ["state"] = tkinter.NORMAL
+    valide_params_btn["state"] = tkinter.NORMAL
+    params_initiaux_btn        ["state"] = tkinter.NORMAL
+    params_precedents_btn     ["state"] = tkinter.NORMAL
 
 def dessine_mandelbrot(xprecision, yprecision):
     global calcul_en_cours
@@ -200,10 +198,10 @@ def calcule_precis():
     # on peut sauver une image seulement apres un calcul précis
     save_button["state"] = tkinter.NORMAL
 
-def sauve_coords():
-    global coords
-    coords.append ([ xmin, xmax, ymin, ymax ])
-    print ("DEBUG: coords = ",coords)
+def sauve_params():
+    global params
+    params.append ([ xmin, xmax, ymin, ymax, rayon, p, iterations ])
+    # print ("DEBUG: params = ",params)
 
 # ---- events souris
 def affiche_position_souris_in_canvas(event):
@@ -234,7 +232,7 @@ def select_area_start(event):
     selected_area_y1 = selected_area_y2 = event.y
     xsel1 = xecran_to_x(selected_area_x1)
     ysel1 = yecran_to_y(selected_area_y1)
-    selected_area_tv.set(f"ZONE SELECTIONNEE:\n\nx1 : {xsel1: .16f}\n\ny1 : {ysel1: .16f}\n\nx2 : \n\ny2 : ")
+    selected_area_tv.set(f"ZONE SELECTIONNEE POUR LE ZOOM:\n\nx1 : {xsel1: .16f}\n\ny1 : {ysel1: .16f}\n\nx2 : \n\ny2 : ")
     selected_rectangle = canvas_dessin.create_rectangle(selected_area_x1, selected_area_y1, selected_area_x1 + 1, selected_area_y1 + 1, fill = "", outline = "white")
 
 def select_area_change(event):
@@ -255,7 +253,7 @@ def select_area_change(event):
 
     xsel2 = xecran_to_x(selected_area_x2)
     ysel2 = yecran_to_y(selected_area_y2)
-    selected_area_tv.set(f"ZONE SELECTIONNEE:\n\nx1 : {xsel1: .16f}\n\ny1 : {ysel1: .16f}\n\nx2 : {xsel2: .16f}\n\ny2 : {ysel2: .16f}")
+    selected_area_tv.set(f"ZONE SELECTIONNEE POUR LE ZOOM:\n\nx1 : {xsel1: .16f}\n\ny1 : {ysel1: .16f}\n\nx2 : {xsel2: .16f}\n\ny2 : {ysel2: .16f}")
 
     canvas_dessin.coords(selected_rectangle, selected_area_x1, selected_area_y1, selected_area_x2, selected_area_y2)
 
@@ -274,7 +272,7 @@ def select_area_end(event):
     if calcul_en_cours:
         return
 
-    selected_area_tv.set("ZONE SELECTIONNEE:\n\nx1 :                    \n\ny1 : \n\nx2 : \n\ny2 : ")
+    selected_area_tv.set("ZONE SELECTIONNEE POUR LE ZOOM:\n\nx1 :                    \n\ny1 : \n\nx2 : \n\ny2 : ")
 
     selected_area_x2 = event.x
     selected_area_y2 = event.y
@@ -286,13 +284,13 @@ def select_area_end(event):
     else:
         minx = min(selected_area_x1, selected_area_x2)
         maxx = max(selected_area_x1, selected_area_x2)
-        print (f"DEBUG: x1={selected_area_x1} x2={selected_area_x2} y1={selected_area_y1} y1={selected_area_y2} min={minx} max={maxx}")
+        # print (f"DEBUG: x1={selected_area_x1} x2={selected_area_x2} y1={selected_area_y1} y1={selected_area_y2} min={minx} max={maxx}")
 
         xmin_new = xecran_to_x(min(selected_area_x1, selected_area_x2))
         xmax_new = xecran_to_x(max(selected_area_x1, selected_area_x2))
         ymin_new = yecran_to_y(max(selected_area_y1, selected_area_y2))
         ymax_new = yecran_to_y(min(selected_area_y1, selected_area_y2))
-        sauve_coords()
+        sauve_params()
         xmin, xmax, ymin, ymax = xmin_new, xmax_new, ymin_new, ymax_new
         largeur_canvas = int (hauteur_canvas * (xmax - xmin) / (ymax - ymin))   # on calcule la largeur pour conserver le ratio 
         zoom_display_area_coords()
@@ -300,32 +298,39 @@ def select_area_end(event):
         calcule_rapide()
 
 def zoom_display_area_coords():
-    dimensions_tv[0].set(f"{xmin: .16f}")
-    dimensions_tv[1].set(f"{xmax: .16f}")
-    dimensions_tv[2].set(f"{ymin: .16f}")
-    dimensions_tv[3].set(f"{ymax: .16f}")
+    params_tv[0].set(f"{xmin: .16f}")
+    params_tv[1].set(f"{xmax: .16f}")
+    params_tv[2].set(f"{ymin: .16f}")
+    params_tv[3].set(f"{ymax: .16f}")
 
-def zoom_reset():
+def params_reset():
     global xmin
     global xmax
     global ymin
     global ymax   
+    global rayon
+    global p
+    global iterations
     global largeur_canvas
 
-    xmin, xmax, ymin, ymax = xmin0, xmax0, ymin0, ymax0
+    xmin, xmax, ymin, ymax = xmin_initial, xmax_initial, ymin_initial, ymax_initial
+    rayon, p, iterations = rayon_initial, p_initial, iterations_initial
     largeur_canvas = int (hauteur_canvas * (xmax - xmin) / (ymax - ymin))   # on calcule la largeur pour conserver le ratio 
     zoom_display_area_coords()
     efface_et_resize_canvas()
     calcule_rapide()
 
-def zoom_out():
+def params_precedents():
     global xmin
     global xmax
     global ymin
     global ymax
+    global rayon
+    global p
+    global iterations
     global largeur_canvas
 
-    xmin, xmax, ymin, ymax = coords.pop()
+    xmin, xmax, ymin, ymax, rayon, p, iterations = params.pop()
     zoom_display_area_coords()
 
     largeur_canvas = int (hauteur_canvas * (xmax - xmin) / (ymax - ymin))   # on calcule la largeur pour conserver le ratio 
@@ -334,19 +339,25 @@ def zoom_out():
 
     #print (f"DEBUG: xmin = {xmin}  xmax = {xmax}  ymin = {ymin}  ymax = {ymax}  coords = {coords}")
 
-def redimensionne():
+def valide_params():
     global xmin
     global xmax
     global ymin
     global ymax
+    global rayon
+    global p
+    global iterations
     global largeur_canvas
 
-    sauve_coords()
+    sauve_params()
 
-    xmin = float(dimensions_tv[0].get())
-    xmax = float(dimensions_tv[1].get())
-    ymin = float(dimensions_tv[2].get())
-    ymax = float(dimensions_tv[3].get())
+    xmin = float(params_tv[0].get())
+    xmax = float(params_tv[1].get())
+    ymin = float(params_tv[2].get())
+    ymax = float(params_tv[3].get())
+    rayon = float(params_tv[4].get())
+    p     = int(params_tv[5].get())
+    iterations = int(params_tv[6].get())
 
     # to do: test if xmin >= xmax or ymin >= max, 
 
@@ -402,41 +413,38 @@ if __name__ == '__main__':
     fenetre.resizable(width=False, height=False)    # on empeche le redimensionnement manuel de la fenetre
 
     # ---- frame de controle
+    params_names = [ "Xmin : ", "Xmax : ", "Ymin : ", "Ymax : ", "Rayon R     : ", "Puissance P : ", "Itérations  : "]
     font_cn16 = tkinter.font.Font(family='Courier new', size=16)
     font_ar16 = tkinter.font.Font(family='Arial', size=16)
     font_ar18 = tkinter.font.Font(family='Arial', size=18)
     font_ar20 = tkinter.font.Font(family='Arial', size=20, weight='bold')
-    power_tv  = tkinter.StringVar()
-    dimensions_tv = []
-    for i in range (4):
-        dimensions_tv.append(tkinter.StringVar())
+    params_tv = []
+    for i in range(len(params_names)):
+        params_tv.append(tkinter.StringVar())
+    params_tv[4].set(rayon_initial);        # R: valeur du module ou l'on arrête les iterations
+    params_tv[5].set(p_initial);            # P: puissance p dans la formule Zn+1 = Zn^p + c
+    params_tv[6].set(iterations_initial);   # nb max d'iterations
+
     current_pos_tv     = tkinter.StringVar()
     calcul_en_cours_tv = tkinter.StringVar()
     selected_area_tv   = tkinter.StringVar()
 
-    power_tv.set("2")
     zoom_display_area_coords()
     current_pos_tv.set("COORDONNEES SOURIS:\n\nx  :                    \n\ny  : ")
     calcul_en_cours_tv.set("")
-    selected_area_tv.set("ZONE SELECTIONNEE:\n\nx1 :                    \n\ny1 : \n\nx2 : \n\ny2 : ")
+    selected_area_tv.set("ZONE SELECTIONNEE POUR LE ZOOM:\n\nx1 :                    \n\ny1 : \n\nx2 : \n\ny2 : ")
 
     frame_controle = tkinter.Frame(fenetre, bg = couleur_frame)
     frame_controle.pack(side = tkinter.LEFT, fill = tkinter.Y)
 
     formule_label   = tkinter.Label (frame_controle, anchor = tkinter.W, font = font_cn16, text = "Zn+1 = Zn ^ p + c", bg = couleur_frame, fg = couleur_selection)
-    power_frame     = tkinter.Frame (frame_controle, bg = couleur_frame)
-    power_label     = tkinter.Label (power_frame, anchor = tkinter.W, font = font_cn16, text = "p = ", bg = couleur_frame, fg = couleur_selection)
-    power_entry     = tkinter.Entry (power_frame, justify = tkinter.LEFT, font = font_cn16, width = 3, bg = couleur_frame, fg = couleur_texte, relief = tkinter.FLAT, highlightcolor = "red", textvariable = power_tv)
-    power_button    = tkinter.Button(power_frame, text = "  PUISSANCE  ", font = font_ar18, height = 2, fg = "green", command = zoom_reset)
-
-    dimensions_frame      = tkinter.Frame(frame_controle, bg = couleur_frame)
-    dims_text = [ "Xmin : ", "Xmax : ", "Ymin : ", "Ymax : "]
-    for i in range(4):
-        tkinter.Label (dimensions_frame, anchor = tkinter.W, font = font_cn16, text = dims_text[i], bg = couleur_frame, fg = couleur_texte).grid(sticky = tkinter.N+tkinter.W, column=0, row=i, pady = 5)
-        tkinter.Entry (dimensions_frame, justify = tkinter.LEFT, font = font_cn16, width = 19, bg = couleur_frame, fg = couleur_texte, relief = tkinter.FLAT, highlightcolor = "red", textvariable = dimensions_tv[i]).grid(sticky = tkinter.N+tkinter.W+tkinter.E, column=1, row=i, pady = 5)
-    redimensionne_button  = tkinter.Button(frame_controle, text = "REDIMENSIONNE", font = font_ar18, height = 2, fg = "green", command = redimensionne)
-    reset_button          = tkinter.Button(frame_controle, text = "DIMENSIONS INITIALES", font = font_ar18, height = 2, fg = "green", command = zoom_reset)
-    zoom_out_button       = tkinter.Button(frame_controle, text = "   DIMENSIONS PRECEDENTES   ", font = font_ar18, height = 2, fg = "green", command = zoom_out)
+    params_frame      = tkinter.Frame(frame_controle, bg = couleur_frame)
+    for i in range(len(params_names)):
+        tkinter.Label (params_frame, anchor = tkinter.W, font = font_cn16, text = params_names[i], bg = couleur_frame, fg = couleur_texte).grid(sticky = tkinter.N+tkinter.W, column=0, row=i, pady = 5)
+        tkinter.Entry (params_frame, justify = tkinter.LEFT, font = font_cn16, width = 26 - len(params_names[i]), bg = couleur_frame, fg = couleur_texte, relief = tkinter.FLAT, highlightcolor = "red", textvariable = params_tv[i]).grid(sticky = tkinter.N+tkinter.W+tkinter.E, column=1, row=i, pady = 5)
+    valide_params_btn     = tkinter.Button(frame_controle, text = "VALIDE PARAMETRES", font = font_ar18, height = 2, fg = "green", command = valide_params)
+    params_initiaux_btn   = tkinter.Button(frame_controle, text = "PARAMETRES INITIAUX", font = font_ar18, height = 2, fg = "green", command = params_reset)
+    params_precedents_btn = tkinter.Button(frame_controle, text = "PARAMETRES PRECEDENTS", font = font_ar18, height = 2, fg = "green", command = params_precedents)
     cc_precis_button      = tkinter.Button(frame_controle, text = "CALCUL PRECIS", font = font_ar18, height = 2, fg = "blue", state = tkinter.DISABLED, command = calcule_precis)
     save_quit_frame       = tkinter.Frame (frame_controle, bg = couleur_frame)
     save_button           = tkinter.Button(save_quit_frame, text = "SAUVER", font = font_ar18, height = 2,  fg = "green", state = tkinter.DISABLED, command = sauver_png)
@@ -445,20 +453,18 @@ if __name__ == '__main__':
     calcul_en_cours_label = tkinter.Label (frame_controle, justify = tkinter.CENTER, font = font_ar20, textvariable = calcul_en_cours_tv, bg = couleur_frame, fg = couleur_calcul_en_cours)
     selected_area_label   = tkinter.Label (frame_controle, justify = tkinter.LEFT, font = font_cn16, textvariable = selected_area_tv, bg = couleur_frame, fg = couleur_selection)
     separator1            = tkinter.ttk.Separator (frame_controle, orient = 'horizontal')
+    separator1b           = tkinter.ttk.Separator (frame_controle, orient = 'horizontal')
     separator2            = tkinter.ttk.Separator (frame_controle, orient = 'horizontal')
     separator3            = tkinter.ttk.Separator (frame_controle, orient = 'horizontal')
     separator4            = tkinter.ttk.Separator (frame_controle, orient = 'horizontal')
 
     formule_label.pack        (side = tkinter.TOP, padx = 20, pady = 10,  fill = tkinter.X)
-    power_frame.pack          (side = tkinter.TOP, padx = 20, pady = 10,   fill = tkinter.X)
-    power_label.pack          (side = tkinter.LEFT, padx = 0, pady = 0,   fill = tkinter.X)
-    power_entry.pack          (side = tkinter.LEFT, padx = 0, pady = 0,   fill = tkinter.X)
-    power_button.pack         (side = tkinter.LEFT, padx = 20, pady = 0,   fill = tkinter.X)
     separator1.pack           (side = tkinter.TOP, padx = 0,  pady = 5,   fill = tkinter.X)
-    dimensions_frame.pack     (side = tkinter.TOP, padx = 20, pady = 0,   fill = tkinter.X)
-    redimensionne_button.pack (side = tkinter.TOP, padx = 20, pady = 10,  fill = tkinter.X)
-    reset_button.pack         (side = tkinter.TOP, padx = 20, pady = 10,  fill = tkinter.X)
-    zoom_out_button.pack      (side = tkinter.TOP, padx = 20, pady = 10,  fill = tkinter.X)
+    params_frame.pack         (side = tkinter.TOP, padx = 20, pady = 0,   fill = tkinter.X)
+    valide_params_btn.pack (side = tkinter.TOP, padx = 20, pady = 10,  fill = tkinter.X)
+    separator1b.pack          (side = tkinter.TOP, padx = 0,  pady = 5,   fill = tkinter.X)
+    params_initiaux_btn.pack         (side = tkinter.TOP, padx = 20, pady = 10,  fill = tkinter.X)
+    params_precedents_btn.pack      (side = tkinter.TOP, padx = 20, pady = 10,  fill = tkinter.X)
     cc_precis_button.pack     (side = tkinter.TOP, padx = 20, pady = 10,  fill = tkinter.X)
     save_quit_frame.pack      (side = tkinter.TOP, padx = 10, pady = 10,  fill = tkinter.X)
     save_quit_frame.columnconfigure (0, weight = 1)
