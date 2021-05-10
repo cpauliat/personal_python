@@ -25,10 +25,11 @@ from PIL import Image
 from PIL import ImageColor
 
 # ---------- variables
-hauteur_canvas, xmin_initial, xmax_initial, ymin_initial, ymax_initial = 900, -2.2, 0.8, -1.3, 1.3
+hauteur_canvas, xmin_initial, xmax_initial, ymin_initial, ymax_initial = 800, -2.2, 0.8, -1.3, 1.3
+#hauteur_canvas, xmin_initial, xmax_initial, ymin_initial, ymax_initial = 500, -1.20, -1.18, 0.29, 0.31
 p = p_initial = 2                        # puissance p dans la formule: zn+1 = zn ^ p + c
 rayon = rayon_initial = 2                # valeur du module pour laquelle on arrête les iterations
-iterations = iterations_initial = 100    # nb max d'iterations
+max_iterations = max_iterations_initial = 100    # nb max d'iterations
 
 couleur_fond       = "#4040D0"
 couleur_mandelbrot = "black"
@@ -37,9 +38,29 @@ xmin, xmax, ymin, ymax = xmin_initial, xmax_initial, ymin_initial, ymax_initial
 largeur_canvas = int (hauteur_canvas * (xmax - xmin) / (ymax - ymin))   # on calcule la largeur pour conserver le ratio 
 params = []
 
+eps = 0.01
+
+precision_faible = 5
+
+color_factor = 500
+logref = math.log(1+color_factor)
 
 # ---------- fonctions
 
+# ---- convertions entre coordonnees reelles et coordonnees graphiques
+def x_to_xecran(x):
+    return int((x - xmin) / (xmax - xmin) * largeur_canvas)
+
+def y_to_yecran(y):
+    return int(hauteur_canvas - (y - ymin) / (ymax - ymin) * hauteur_canvas)
+
+def xecran_to_x(xe):
+    return float(xe * (xmax - xmin) / largeur_canvas + xmin)
+
+def yecran_to_y(ye):
+    return float(ymax - ye * (ymax - ymin) / hauteur_canvas)
+
+# ---- gestion des couleurs
 def colors_degrade(c1, c2, nbcolors):
     col = []
     [ r1, g1, b1 ] = ImageColor.getcolor(c1,"RGB")
@@ -74,72 +95,58 @@ def colors_palette3():
     colors.extend(colors_degrade("yellow","green",200))
     colors.extend(colors_degrade("green","darkgreen",400))
 
+def get_color_from_iteration(nb_iterations):
+    if nb_iterations == max_iterations:
+        return couleur_mandelbrot
+    else:
+        color_index = int(nb_iterations / max_iterations * nb_colors)
+#        color_index2 = int(nb_colors * math.log(color_factor*n/max_iterations + 1) / logref)
+#                color_index2 = int(nb_colors * (math.exp(4 * n / max_iterations) - 1) / (math.exp(4) - 1))
+        return colors [color_index] 
+
+# ---- Calculs
 # Suite: zn+1 = zn ^ p + c
 def znp1(zn, c):
-    global p
-
     z = zn
     for i in range(p - 1):
         z = z * zn
     z = z + c
     return z
 
-def mandelbrot_color(x,y):
+def mandelbrot_iterations_basic(x,y):
     zn = 0
     c  = x + y * 1j
     n  = 0
+    while (n < max_iterations) and (abs(zn) <= 2): # rayon instead of 2
+        zn = znp1 (zn, c)
+        n += 1
+    return n
 
-    while (n < iterations) and (abs(zn) <= rayon):
+def mandelbrot_iterations_periodicity_checking(x,y):
+    zn = 0
+    c  = x + y * 1j
+    n  = 0
+    z_old = 0
+    while (n < max_iterations) and (abs(zn) <= 2): # rayon instead of 2
         zn = znp1 (zn, c)
         n += 1
 
-    if n == iterations:
-        return couleur_mandelbrot
-    else:
-        color_index = int(n / iterations * nb_colors)
-        return colors [color_index] 
+        if abs(zn - z_old) < 0.01:
+            n = max_iterations
+            break
 
-def x_to_xecran(x):
-    return int((x - xmin) / (xmax - xmin) * largeur_canvas)
+        if n % 20 == 0:
+            z_old = zn
 
-def y_to_yecran(y):
-    return int(hauteur_canvas - (y - ymin) / (ymax - ymin) * hauteur_canvas)
+    return n
 
-def xecran_to_x(xe):
-    return float(xe * (xmax - xmin) / largeur_canvas + xmin)
-
-def yecran_to_y(ye):
-    return float(ymax - ye * (ymax - ymin) / hauteur_canvas)
-
-def efface_et_resize_canvas():
-    global canvas_dessin
-    global current_pos_tv
-
-    # on peut sauver une image seulement apres un calcul précis
-    save_button["state"] = tkinter.DISABLED
-
-    canvas_dessin.delete("all")
-    canvas_dessin.config(width = largeur_canvas)
-    current_pos_tv.set("COORDONNEES SOURIS:\n\nx  :                    \n\ny  : ")
-
-
-def disable_buttons():
-    valide_params_btn["state"] = tkinter.DISABLED
-    params_initiaux_btn        ["state"] = tkinter.DISABLED
-    params_precedents_btn     ["state"] = tkinter.DISABLED
-    
-def enable_buttons():
-    valide_params_btn["state"] = tkinter.NORMAL
-    params_initiaux_btn        ["state"] = tkinter.NORMAL
-    params_precedents_btn     ["state"] = tkinter.NORMAL
-
-def dessine_mandelbrot(xprecision, yprecision):
+def dessine_mandelbrot_algo_basic(precision):
     global calcul_en_cours
     global selected_rectangle
     global canvas_dessin
     global myarray
 
-    print (f"Calcul démarré")
+    print (f"Calcul algo basic démarré")
     calcul_en_cours = True
     disable_buttons()
     calcul_en_cours_tv.set("CALCUL EN COURS : 0 %")
@@ -147,12 +154,12 @@ def dessine_mandelbrot(xprecision, yprecision):
 
     t1 = time.time()
     t2 = t1
-    for xe in range(0,largeur_canvas,xprecision):
-        for ye in range(0,hauteur_canvas,yprecision):
+    for xe in range(0,largeur_canvas,precision):
+        for ye in range(0,hauteur_canvas,precision):
             x = xecran_to_x(xe)
             y = yecran_to_y(ye)
-            color = mandelbrot_color(x,y)
-            canvas_dessin.create_rectangle(xe, ye, xe+xprecision, ye+yprecision, outline = color, fill = color)
+            color = get_color_from_iteration(mandelbrot_iterations_periodicity_checking(x,y))
+            canvas_dessin.create_rectangle(xe, ye, xe+precision, ye+precision, outline = color, fill = color)
             rgb = ImageColor.getcolor(color,"RGB")
             myarray[ye][xe][0] =  rgb[0]
             myarray[ye][xe][1] =  rgb[1]
@@ -167,7 +174,113 @@ def dessine_mandelbrot(xprecision, yprecision):
             calcul_en_cours_label.update()
 
     t4 = time.time()
-    print (f"Calcul terminée: durée = {t4 - t1:.2f} s.")
+    print (f"Calcul algo basic terminé: durée = {t4 - t1:.2f} s.")
+
+    calcul_en_cours_tv.set("CALCUL EN COURS : 100 %")
+    calcul_en_cours_label.update()
+
+    canvas_dessin.update()
+
+    calcul_en_cours = False
+    calcul_en_cours_tv.set("")
+    enable_buttons()
+
+# ---- Advanced algorithm   DOES NOT WORK YET
+def dessine_mandelbrot_algo_advanced(precision):
+    global calcul_en_cours
+    global selected_rectangle
+    global canvas_dessin
+    global myarray
+
+    print (f"Calcul basic démarré")
+    calcul_en_cours = True
+    disable_buttons()
+    calcul_en_cours_tv.set("CALCUL EN COURS : 0 %")
+    fenetre.update()
+
+    t1 = time.time()
+    t2 = t1
+
+    # Initialisation a partir du point de reference Z0 (nombre complexe) au centre du canvas
+    Z0 = xmin + (xmax - xmin) / 2 + 1j * (ymin + (ymax - ymin) / 2)
+    Zn = Z0
+
+    An = 1
+    Bn = Cn = 0
+    Zn_array = [ Zn ]
+    An_array = [ An ]
+    Bn_array = [ Bn ]
+    Cn_array = [ Cn ]
+
+    for n in range(max_iterations):
+        Anp1 = 2 * Zn * An + 1 
+        Bnp1 = 2 * Zn * Bn + An * An
+        Cnp1 = 2 * Zn * Cn + 2 * An * Bn
+        Znp1 = Zn * Zn + Z0
+        An_array.append(Anp1)
+        Bn_array.append(Bnp1)
+        Cn_array.append(Cnp1)
+        Zn_array.append(Znp1)
+        An = Anp1
+        Bn = Bnp1
+        Cn = Cnp1
+        Zn = Znp1
+
+        print ("An = ",An_array)
+        print ("Bn = ",Bn_array)
+        print ("Cn = ",Cn_array)
+
+    # On traite les points W0 de l'ecran avec la formule
+    # Wn - Zn = DN = An * D0 + BN * D0^2 + CN * D0^3 + negligeable(D0^4)
+    # D0 = W0 - Z0  
+    for xe in range(0,largeur_canvas,precision):
+        for ye in range(0,hauteur_canvas,precision):
+            x = xecran_to_x(xe)
+            y = yecran_to_y(ye)
+            W0 = x + 1j * y
+
+            D0 = W0 - Z0
+            D02 = D0 * D0           # D0^2
+            D03 = D0 * D02          # D0^3
+            Wn = W0
+
+            
+            n = 0
+            while (n < max_iterations) and (abs(Wn) <= rayon):
+                Zn = Zn_array[n]
+                An = An_array[n]
+                Bn = Bn_array[n]
+                Cn = Cn_array[n]
+                Wn = Zn + An * D0 + Bn * D02 + Cn * D03
+                n += 1
+                if (x == -1.186) and (y == 0.302):
+                    print (f"  DEBUG: x = {x} y={y} n={n} abs(Wn)={abs(Wn)}")
+
+            if (x == -1.186) and (y == 0.302):
+                print (f"DEBUG: x = {x} y={y} n={n} abs(Wn)={abs(Wn)} abs(W0)={abs(W0)} abs(D0)={abs(D0)}")
+
+            if n == max_iterations:
+                color = couleur_mandelbrot
+            else:
+                color = colors[int(n / max_iterations * nb_colors)]
+
+            canvas_dessin.create_rectangle(xe, ye, xe+precision, ye+precision, outline = color, fill = color)
+            rgb = ImageColor.getcolor(color,"RGB")
+            myarray[ye][xe][0] =  rgb[0]
+            myarray[ye][xe][1] =  rgb[1]
+            myarray[ye][xe][2] =  rgb[2]
+
+        t3 = time.time()
+        # toutes les secondes, on refresh l'écran
+        if t3 - t2 > 1:
+            t2 = t3
+            canvas_dessin.update()
+            pct = int(xe / largeur_canvas * 100)
+            calcul_en_cours_tv.set(f"CALCUL EN COURS : {pct} %")
+            calcul_en_cours_label.update()
+    #
+    t4 = time.time()
+    print (f"Calcul basic terminé: durée = {t4 - t1:.2f} s.")
 
     calcul_en_cours_tv.set("CALCUL EN COURS : 100 %")
     calcul_en_cours_label.update()
@@ -183,7 +296,7 @@ def calcule_rapide():
 
     # on cree un Numpy Array pour contenir l'image calculee
     myarray = np.zeros(shape=(hauteur_canvas,largeur_canvas,3), dtype=np.uint8)
-    dessine_mandelbrot(5, 5)
+    dessine_mandelbrot_algo_basic(precision_faible)
 
     # apres le calcul rapide, on peut activer le bouton calcul precis
     cc_precis_button["state"] = tkinter.NORMAL
@@ -193,17 +306,40 @@ def calcule_precis():
     cc_precis_button["state"] = tkinter.DISABLED
     
     # calcul et affichage
-    dessine_mandelbrot(1, 1)
+    dessine_mandelbrot_algo_basic(1)
+    #dessine_mandelbrot_algo_advanced(5)
 
     # on peut sauver une image seulement apres un calcul précis
     save_button["state"] = tkinter.NORMAL
 
+# ---- divers
+def efface_et_resize_canvas():
+    global canvas_dessin
+    global current_pos_tv
+
+    # on peut sauver une image seulement apres un calcul précis
+    save_button["state"] = tkinter.DISABLED
+
+    canvas_dessin.delete("all")
+    canvas_dessin.config(width = largeur_canvas)
+    current_pos_tv.set("COORDONNEES SOURIS:\n\nx  :                    \n\ny  : ")
+
+def disable_buttons():
+    valide_params_btn["state"] = tkinter.DISABLED
+    params_initiaux_btn["state"] = tkinter.DISABLED
+    params_precedents_btn["state"] = tkinter.DISABLED
+    
+def enable_buttons():
+    valide_params_btn["state"] = tkinter.NORMAL
+    params_initiaux_btn["state"] = tkinter.NORMAL
+    params_precedents_btn["state"] = tkinter.NORMAL
+
 def sauve_params():
     global params
-    params.append ([ xmin, xmax, ymin, ymax, rayon, p, iterations ])
+    params.append ([ xmin, xmax, ymin, ymax, rayon, p, max_iterations ])
     # print ("DEBUG: params = ",params)
 
-# ---- events souris
+# ---- selection avec la souris d'une zone a zoomer 
 def affiche_position_souris_in_canvas(event):
     global current_pos_tv
 
@@ -297,6 +433,7 @@ def select_area_end(event):
         efface_et_resize_canvas()
         calcule_rapide()
 
+# ---- gestion des parametres utilisés pour les calculs
 def zoom_display_area_coords():
     params_tv[0].set(f"{xmin: .16f}")
     params_tv[1].set(f"{xmax: .16f}")
@@ -310,11 +447,11 @@ def params_reset():
     global ymax   
     global rayon
     global p
-    global iterations
+    global max_iterations
     global largeur_canvas
 
     xmin, xmax, ymin, ymax = xmin_initial, xmax_initial, ymin_initial, ymax_initial
-    rayon, p, iterations = rayon_initial, p_initial, iterations_initial
+    rayon, p, max_iterations = rayon_initial, p_initial, max_iterations_initial
     largeur_canvas = int (hauteur_canvas * (xmax - xmin) / (ymax - ymin))   # on calcule la largeur pour conserver le ratio 
     zoom_display_area_coords()
     efface_et_resize_canvas()
@@ -327,10 +464,10 @@ def params_precedents():
     global ymax
     global rayon
     global p
-    global iterations
+    global max_iterations
     global largeur_canvas
 
-    xmin, xmax, ymin, ymax, rayon, p, iterations = params.pop()
+    xmin, xmax, ymin, ymax, rayon, p, max_iterations = params.pop()
     zoom_display_area_coords()
 
     largeur_canvas = int (hauteur_canvas * (xmax - xmin) / (ymax - ymin))   # on calcule la largeur pour conserver le ratio 
@@ -346,26 +483,35 @@ def valide_params():
     global ymax
     global rayon
     global p
-    global iterations
+    global max_iterations
     global largeur_canvas
 
+    try:
+        xmin_tmp = float(params_tv[0].get())
+        xmax_tmp = float(params_tv[1].get())
+        ymin_tmp = float(params_tv[2].get())
+        ymax_tmp = float(params_tv[3].get())
+        rayon_tmp = float(params_tv[4].get())
+        p_tmp     = int(params_tv[5].get())
+        max_iterations_tmp = int(params_tv[6].get())
+    except Exception as err:
+        tkinter.messagebox.showerror(title="Paramètres invalides", message="ERREUR: les paramètres sont invalides ! "+str(err))
+        return
+
+    # vérifie validité des paramètres
+    if xmin_tmp >= xmax_tmp or ymin_tmp >= ymax_tmp:
+        tkinter.messagebox.showerror(title="Paramètres invalides", message="ERREUR: les paramètres sont invalides !")
+        return
+
+    # si les params sont valides, on les accepte
     sauve_params()
-
-    xmin = float(params_tv[0].get())
-    xmax = float(params_tv[1].get())
-    ymin = float(params_tv[2].get())
-    ymax = float(params_tv[3].get())
-    rayon = float(params_tv[4].get())
-    p     = int(params_tv[5].get())
-    iterations = int(params_tv[6].get())
-
-    # to do: test if xmin >= xmax or ymin >= max, 
-
+    xmin, xmax, ymin, ymax, rayon = xmin_tmp, xmax_tmp, ymin_tmp, ymax_tmp, rayon_tmp
+    p, max_iterations             = p_tmp, max_iterations_tmp
     largeur_canvas = int (hauteur_canvas * (xmax - xmin) / (ymax - ymin))   # on calcule la largeur pour conserver le ratio 
     efface_et_resize_canvas()
     calcule_rapide()
 
-# ---- Fin du programme après confirmation
+# ---- Sauvegarde de l'image cree avec calcul precis dans un fichier .png
 def sauver_png():
     myFormats = [ ('Image PNG','*.png') ]
     nom_fichier = tkinter.filedialog.asksaveasfilename(parent = fenetre, initialdir = "images", filetypes = myFormats, title="Choisir un nom pour le fichier PNG")
@@ -385,6 +531,7 @@ def sauver_png():
     mon_image = Image.fromarray(myarray)
     mon_image.save(nom_fichier)
 
+# ---- Fin du programme après confirmation
 def quitter():
     if tkinter.messagebox.askyesno("Fin du programme","Voulez-vous vraiment quitter l'application ?"): 
         fenetre.destroy()
@@ -413,7 +560,7 @@ if __name__ == '__main__':
     fenetre.resizable(width=False, height=False)    # on empeche le redimensionnement manuel de la fenetre
 
     # ---- frame de controle
-    params_names = [ "Xmin : ", "Xmax : ", "Ymin : ", "Ymax : ", "Rayon R     : ", "Puissance P : ", "Itérations  : "]
+    params_names = [ "Xmin", "Xmax", "Ymin", "Ymax", "Rayon R", "Puissance P", "Itérations"]
     font_cn16 = tkinter.font.Font(family='Courier new', size=16)
     font_ar16 = tkinter.font.Font(family='Arial', size=16)
     font_ar18 = tkinter.font.Font(family='Arial', size=18)
@@ -421,9 +568,9 @@ if __name__ == '__main__':
     params_tv = []
     for i in range(len(params_names)):
         params_tv.append(tkinter.StringVar())
-    params_tv[4].set(rayon_initial);        # R: valeur du module ou l'on arrête les iterations
-    params_tv[5].set(p_initial);            # P: puissance p dans la formule Zn+1 = Zn^p + c
-    params_tv[6].set(iterations_initial);   # nb max d'iterations
+    params_tv[4].set(rayon_initial);            # R: valeur du module ou l'on arrête les iterations
+    params_tv[5].set(p_initial);                # P: puissance p dans la formule Zn+1 = Zn^p + c
+    params_tv[6].set(max_iterations_initial);   # nb max d'iterations
 
     current_pos_tv     = tkinter.StringVar()
     calcul_en_cours_tv = tkinter.StringVar()
@@ -481,8 +628,10 @@ if __name__ == '__main__':
     # ---- canvas pour dessiner
     xe0 = x_to_xecran(0)
     ye0 = y_to_yecran(0)
+    separator5    = tkinter.ttk.Separator (fenetre, orient = 'vertical')
+    separator5.pack (side = tkinter.LEFT, padx = 0,  pady = 0,   fill = tkinter.Y)
     canvas_dessin = tkinter.Canvas(fenetre, bg = "black", highlightthickness = 0)
-    canvas_dessin.pack(side = tkinter.LEFT)
+    canvas_dessin.pack(side = tkinter.LEFT, padx = 20)
     canvas_dessin.config(width = largeur_canvas, height = hauteur_canvas)
 
     # ---- Events souris dans le canvas

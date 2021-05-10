@@ -52,7 +52,7 @@ def parse_args():
     largeur_image = int (hauteur_image * (xmax - xmin) / (ymax - ymin))
 
     # si le nom de fichier ne finit pas par ".png", on rajoute .png à la fin
-    if nom_fichier[:4] != ".png":
+    if nom_fichier[-4:] != ".png":
         nom_fichier = nom_fichier + ".png"
 
 # ---- convertions entre coordonnees reelles et coordonnees graphiques
@@ -150,9 +150,6 @@ def julia_iterations_periodicity_checking(x,y):
     return n
 
 def calcule_julia_algo_basic():
-    global calcul_en_cours
-    global selected_rectangle
-    global canvas_dessin
     global myarray
 
     # on cree un Numpy Array pour contenir l'image calculee
