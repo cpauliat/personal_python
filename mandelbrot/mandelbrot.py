@@ -327,17 +327,15 @@ def efface_et_resize_canvas():
 def disable_buttons():
     valide_params_btn["state"] = tkinter.DISABLED
     params_initiaux_btn["state"] = tkinter.DISABLED
-    params_precedents_btn["state"] = tkinter.DISABLED
     
 def enable_buttons():
     valide_params_btn["state"] = tkinter.NORMAL
     params_initiaux_btn["state"] = tkinter.NORMAL
-    params_precedents_btn["state"] = tkinter.NORMAL
 
 def sauve_params():
     global params
     params.append ([ xmin, xmax, ymin, ymax, rayon, p, max_iterations ])
-    # print ("DEBUG: params = ",params)
+    params_precedents_btn["state"] = tkinter.NORMAL
 
 # ---- selection avec la souris d'une zone a zoomer 
 def affiche_position_souris_in_canvas(event):
@@ -467,14 +465,14 @@ def params_precedents():
     global max_iterations
     global largeur_canvas
 
-    xmin, xmax, ymin, ymax, rayon, p, max_iterations = params.pop()
-    zoom_display_area_coords()
-
-    largeur_canvas = int (hauteur_canvas * (xmax - xmin) / (ymax - ymin))   # on calcule la largeur pour conserver le ratio 
-    efface_et_resize_canvas()
-    calcule_rapide()
-
-    #print (f"DEBUG: xmin = {xmin}  xmax = {xmax}  ymin = {ymin}  ymax = {ymax}  coords = {coords}")
+    if len(params) > 0:
+        xmin, xmax, ymin, ymax, rayon, p, max_iterations = params.pop()
+        if len(params) == 0:
+            params_precedents_btn["state"] = tkinter.DISABLED    
+        zoom_display_area_coords()
+        largeur_canvas = int (hauteur_canvas * (xmax - xmin) / (ymax - ymin))   # on calcule la largeur pour conserver le ratio 
+        efface_et_resize_canvas()
+        calcule_rapide()
 
 def valide_params():
     global xmin
@@ -592,6 +590,7 @@ if __name__ == '__main__':
     valide_params_btn     = tkinter.Button(frame_controle, text = "VALIDE PARAMETRES", font = font_ar18, height = 2, fg = "green", command = valide_params)
     params_initiaux_btn   = tkinter.Button(frame_controle, text = "PARAMETRES INITIAUX", font = font_ar18, height = 2, fg = "green", command = params_reset)
     params_precedents_btn = tkinter.Button(frame_controle, text = "PARAMETRES PRECEDENTS", font = font_ar18, height = 2, fg = "green", command = params_precedents)
+    params_precedents_btn["state"] = tkinter.DISABLED
     cc_precis_button      = tkinter.Button(frame_controle, text = "CALCUL PRECIS", font = font_ar18, height = 2, fg = "blue", state = tkinter.DISABLED, command = calcule_precis)
     save_quit_frame       = tkinter.Frame (frame_controle, bg = couleur_frame)
     save_button           = tkinter.Button(save_quit_frame, text = "SAUVER", font = font_ar18, height = 2,  fg = "green", state = tkinter.DISABLED, command = sauver_png)
