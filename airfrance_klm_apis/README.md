@@ -1,12 +1,12 @@
-# Python scripts to get flight offer from AirFrance-KLM
+# Python scripts to get flight offers from AirFrance-KLM
 
-## post_available_offers.py
+## post_available_offers_all.py
 
-List all possible flight from an origin airport to destination airport on given outbound date and return date
+List all possible flights from an origin airport to destination airport on given outbound date and return date
 
 ## post_lowest_fare_offers.py
 
-List cheapest_flight rom an origin airport to destination airport on a range of outbound dates and return dates
+List cheapest_flight from an origin airport to destination airport on a range of outbound dates and return dates
 
 ## PREREQUISITE:
 
