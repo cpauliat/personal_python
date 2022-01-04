@@ -38,12 +38,15 @@ COLOR_CYAN   = "\033[96m"
 COLOR_BLUE   = "\033[94m"
 COLOR_GREY   = "\033[90m"
 
-COLOR_TITLE     = COLOR_GREEN
-COLOR_DATA      = COLOR_BLUE
-COLOR_ITINERARY = COLOR_YELLOW
-COLOR_PRICE1    = COLOR_RED
-COLOR_PRICE2    = COLOR_CYAN
-COLOR_LINKS     = COLOR_GREY
+COLOR_TITLE         = COLOR_GREEN
+COLOR_DATA          = COLOR_BLUE
+COLOR_ITINERARY     = COLOR_YELLOW
+COLOR_PRICE1        = COLOR_RED
+COLOR_PRICE2        = COLOR_CYAN
+COLOR_LINKS         = COLOR_GREY
+COLOR_LOWEST_PRICE  = COLOR_GREEN  
+COLOR_HIGHEST_PRICE = COLOR_RED
+COLOR_DECILE1_PRICE = COLOR_YELLOW
 
 # ---------- Functions
 
@@ -56,14 +59,20 @@ def disable_colored_output():
   global COLOR_PRICE1
   global COLOR_PRICE2
   global COLOR_LINKS
+  global COLOR_LOWEST_PRICE   
+  global COLOR_HIGHEST_PRICE
+  global COLOR_DECILE1_PRICE
 
-  COLOR_NORMAL    = ""
-  COLOR_TITLE     = ""
-  COLOR_DATA      = ""
-  COLOR_ITINERARY = ""
-  COLOR_PRICE1    = ""
-  COLOR_PRICE2    = ""
-  COLOR_LINKS     = ""
+  COLOR_NORMAL        = ""
+  COLOR_TITLE         = ""
+  COLOR_DATA          = ""
+  COLOR_ITINERARY     = ""
+  COLOR_PRICE1        = ""
+  COLOR_PRICE2        = ""
+  COLOR_LINKS         = ""
+  COLOR_LOWEST_PRICE  = ""  
+  COLOR_HIGHEST_PRICE = ""
+  COLOR_DECILE1_PRICE = ""
 
 # ---- Get data using REST APIs
 def post_request(origin, destination, date_voyage_aller, date_voyage_retour, airline, cabin):
@@ -184,23 +193,37 @@ def get_lowest_and_highest_prices(mydict):
 # ---- Display only relevant data in formatted output
 def display_formatted_data(mydict):
   num_iti = 0
+  connection_max_segments = 0
   try:
     itineraries = mydict["itineraries"]
+
+    # First, compute max number of segments for connection1 (outbound flights) and connection2 (return flights)
+    for itinerary in itineraries:
+      connections = itinerary["connections"]
+      connection1 = connections[0]
+      connection2 = connections[1]
+      if len(connection1["segments"]) > connection_max_segments:
+        connection_max_segments = len(connection1["segments"])
+      if len(connection2["segments"]) > connection_max_segments:
+        connection_max_segments = len(connection2["segments"])
+
+    # Then display information
     for itinerary in itineraries:
       num_iti += 1
       price       = itinerary["flightProducts"][0]["price"]["totalPrice"]
       currency    = itinerary["flightProducts"][0]["price"]["currency"]
       connections = itinerary["connections"]
 
-      print ("==================== "+COLOR_ITINERARY+f"Itinerary {num_iti}"+COLOR_NORMAL+" : Price = "+COLOR_PRICE1+f"{price:.2f} {currency}  ", end="")
+      print (COLOR_PRICE1+"======================================== "+COLOR_ITINERARY+f"Itinerary {num_iti}"+COLOR_NORMAL+" : Price = "+COLOR_PRICE1+f"{price:.2f} {currency}  ", end="")
       if price == lowest_price:
-        print (COLOR_GREEN+" ======== LOWEST PRICE ========")
+        print (COLOR_LOWEST_PRICE+" ======== LOWEST PRICE ========")
       elif price == highest_price:
-        print (COLOR_RED+" ======== HIGHEST PRICE ========")
+        print (COLOR_HIGHEST_PRICE+" ======== HIGHEST PRICE ========")
       elif price <= decile1_max_price:
-        print (COLOR_YELLOW+" ======== 1st DECILE PRICE ========")
+        print (COLOR_DECILE1_PRICE+" ======== 1st DECILE PRICE ========")
       else:
         print (COLOR_NORMAL)
+      print (COLOR_NORMAL)
 
       num_con = 0
       for connection in connections:
@@ -216,37 +239,72 @@ def display_formatted_data(mydict):
         elif num_con > 1 and len(segments) > 1:
           name_con = "Return flights : WITH CONNECTION"
   
-        print (COLOR_NORMAL)
-        print ("---------- "+COLOR_ITINERARY+f"{name_con}"+COLOR_NORMAL+" : price = "+COLOR_PRICE2+f"{price_connection:.2f} {currency}"+COLOR_NORMAL)
+        connection_title = COLOR_NORMAL+"---------- "+COLOR_ITINERARY+f"{name_con:34s}"+COLOR_NORMAL+" : price = "+COLOR_PRICE2+f"{price_connection:7.2f} {currency:3s}"+COLOR_NORMAL
+        # connection_title uses 67 characters so add 17 spaces to reach 84 characters
+        print (f"{connection_title}{' ':17s}",end="")
+        if connection_max_segments == 3:
+          print (f"{' ':42s}",end="")        
+        print ("   ",end="")
+      print ("")
 
+      for connection in connections:
+        segments = connection["segments"]
         for segment in segments:
           line1 = COLOR_TITLE+"Flight   : "+COLOR_DATA+f"{segment['marketingFlight']['carrier']['code']}{segment['marketingFlight']['number']}"
-          print (f"{line1:50s} ",end="")
-        print ("")
+          # line1 uses 17 characters so add 25 spaces to reach 42 characters
+          print (f"{line1}{' ':25s}",end="")
+        # if less segments than connection_max_segments, add spaces for each missing segment
+        for _ in range(connection_max_segments - len(segments)):
+          print (f"{' ':42s}",end="")
+        print (COLOR_LINKS+" | "+COLOR_NORMAL,end="")
+      print ("")
 
+      for connection in connections:
+        segments = connection["segments"]
         for segment in segments:
           line2 = COLOR_TITLE+"Departure: "+COLOR_DATA+f"{segment['origin']['code']} at {segment['departureDateTime']}"
-          print (f"{line2:50s} ",end="")
-        print ("")
+          # line2 uses 37 characters so add 5 spaces to reach 42 characters
+          print (f"{line2}{' ':5s}",end="")
+        # if less segments than connection_max_segments, add spaces for each missing segment
+        for _ in range(connection_max_segments - len(segments)):
+          print (f"{' ':42s}",end="")
+        print (COLOR_LINKS+" | "+COLOR_NORMAL,end="")
+      print ("")
 
+      for connection in connections:
+        segments = connection["segments"]
         for segment in segments:
           line3 = COLOR_TITLE+"Arrival  : "+COLOR_DATA+f"{segment['destination']['code']} at {segment['arrivalDateTime']}"
-          print (f"{line3:50s} ",end="")
-        print ("")
+          # line3 uses 37 characters so add 5 spaces to reach 42 characters
+          print (f"{line3}{' ':5s}",end="")
+        # if less segments than connection_max_segments, add spaces for each missing segment
+        for _ in range(connection_max_segments - len(segments)):
+          print (f"{' ':42s}",end="")        
+        print (COLOR_LINKS+" | "+COLOR_NORMAL,end="")
+      print ("")
 
+      for connection in connections:
+        segments = connection["segments"]
         for segment in segments:
-          line4 = COLOR_TITLE+"Aircraft : "+COLOR_DATA+f"{segment['marketingFlight']['operatingFlight']['equipmentType']['name']}"
-          print (f"{line4:50s} ",end="")
-        print ("")
+          line4 = COLOR_TITLE+"Aircraft : "+COLOR_DATA+f"{segment['marketingFlight']['operatingFlight']['equipmentType']['name']:26s}"
+          # line3 uses 37 characters so add 5 spaces to reach 42 characters
+          print (f"{line4}{' ':5s}",end="")
+        # if less segments than connection_max_segments, add spaces for each missing segment
+        for _ in range(connection_max_segments - len(segments)):
+          print (f"{' ':42s}",end="")
+        print (COLOR_LINKS+" | "+COLOR_NORMAL,end="")
+      print ("")
 
-        # If requested, display links for cabin plans
-        if args.cabin_plan:
-          print ("")
+      # If requested, display links for cabin plans
+      if args.cabin_plan:
+        print ("")
+        for connection in connections:
+          segments = connection["segments"]
           for segment in segments:
             try:
               flight_number = f"{segment['marketingFlight']['carrier']['code']}{segment['marketingFlight']['number']}"
               link          = f"{segment['marketingFlight']['operatingFlight']['equipmentType']['_links']['information']['href']}"
-              print (COLOR_TITLE + f"Cabin plan {flight_number}: "+COLOR_LINKS+f"{link}")
+              print (COLOR_TITLE+f"Cabin plan {flight_number}: "+COLOR_LINKS+f"{link}")
             except:
               pass
 
@@ -274,11 +332,11 @@ def display_minimal_data(mydict):
       connections = itinerary["connections"]
     
       if price == lowest_price:
-        COLOR = COLOR_GREEN
+        COLOR = COLOR_LOWEST_PRICE    
       elif price == highest_price:
-        COLOR = COLOR_RED
+        COLOR = COLOR_HIGHEST_PRICE
       elif price <= decile1_max_price:
-        COLOR = COLOR_YELLOW
+        COLOR = COLOR_DECILE1_PRICE
       else:
         COLOR = COLOR_NORMAL
 
