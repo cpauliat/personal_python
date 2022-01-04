@@ -137,7 +137,6 @@ def post_request(origin, destination, date_voyage_aller, date_voyage_retour, air
     'AFKL-TRAVEL-Country': 'FR',
     'api-key': my_api_key,
   }
-#    'Cookie': 'TS018c59be=0191981a55f1065e2b40d522060a260683f26004493efd7420e7badf5a2baa04f1def875fe8b579486a1db90414bcada4b5697c68e'
 
   response = requests.request("POST", url, headers=headers, data=payload)
   mydict   = json.loads(response.text)
