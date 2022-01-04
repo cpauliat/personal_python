@@ -26,6 +26,7 @@ default_cabin       = "ECONOMY"          # Can contain ECONOMY or PREMIUM or BUS
 default_airline     = "AF"               # AF or KL
 lowest_price        = 9999
 highest_price       = 0
+decile1_max_price   = 0
 
 # ---------- Colors for output
 # see https://misc.flogisoft.com/bash/tip_colors_and_formatting to customize
@@ -65,7 +66,7 @@ def disable_colored_output():
   COLOR_LINKS     = ""
 
 # ---- Get data using REST APIs
-def post_request(origin, destination, date_voyage_aller, date_voyage_retour, airline, cabin=default_cabin):
+def post_request(origin, destination, date_voyage_aller, date_voyage_retour, airline, cabin):
   url = "https://api.airfranceklm.com/opendata/offers/v1/available-offers/all"
 
   payload = json.dumps({
@@ -166,6 +167,7 @@ def display_raw_data(mydict):
 def get_lowest_and_highest_prices(mydict):
   global lowest_price
   global highest_price
+  global decile1_max_price
 
   try:
     itineraries = mydict["itineraries"]
@@ -175,6 +177,7 @@ def get_lowest_and_highest_prices(mydict):
         lowest_price = price
       if price > highest_price: 
         highest_price = price
+    decile1_max_price = lowest_price + (highest_price - lowest_price) / 10
   except:
     pass
 
@@ -194,6 +197,8 @@ def display_formatted_data(mydict):
         print (COLOR_GREEN+" ======== LOWEST PRICE ========")
       elif price == highest_price:
         print (COLOR_RED+" ======== HIGHEST PRICE ========")
+      elif price <= decile1_max_price:
+        print (COLOR_YELLOW+" ======== 1st DECILE PRICE ========")
       else:
         print (COLOR_NORMAL)
 
@@ -201,9 +206,18 @@ def display_formatted_data(mydict):
       for connection in connections:
         price_connection = itinerary["flightProducts"][0]["connections"][num_con]["price"]["totalPrice"]
         num_con += 1
-        print (COLOR_NORMAL)
-        print ("---------- "+COLOR_ITINERARY+f"connection {num_con}"+COLOR_NORMAL+" : price = "+COLOR_PRICE2+f"{price_connection:.2f} {currency}"+COLOR_NORMAL)
         segments = connection["segments"]
+        if num_con == 1 and len(segments) == 1:
+          name_con = "Outbound flight : DIRECT"
+        elif num_con == 1 and len(segments) > 1:
+          name_con = "Outbound flights : WITH CONNECTION"
+        elif num_con > 1 and len(segments) == 1:
+          name_con = "Return flight : DIRECT"      
+        elif num_con > 1 and len(segments) > 1:
+          name_con = "Return flights : WITH CONNECTION"
+  
+        print (COLOR_NORMAL)
+        print ("---------- "+COLOR_ITINERARY+f"{name_con}"+COLOR_NORMAL+" : price = "+COLOR_PRICE2+f"{price_connection:.2f} {currency}"+COLOR_NORMAL)
 
         for segment in segments:
           line1 = COLOR_TITLE+"Flight   : "+COLOR_DATA+f"{segment['marketingFlight']['carrier']['code']}{segment['marketingFlight']['number']}"
@@ -263,6 +277,8 @@ def display_minimal_data(mydict):
         COLOR = COLOR_GREEN
       elif price == highest_price:
         COLOR = COLOR_RED
+      elif price <= decile1_max_price:
+        COLOR = COLOR_YELLOW
       else:
         COLOR = COLOR_NORMAL
 
@@ -283,6 +299,8 @@ def display_minimal_data(mydict):
         print ("LOWEST PRICE")
       elif price == highest_price:
         print ("HIGHEST PRICE")
+      elif price <= decile1_max_price:
+        print ("1st DECILE PRICE")
       else:
         print (COLOR_NORMAL)
 
@@ -308,6 +326,7 @@ parser.add_argument("-al", "--airline", help=f"airline code (AF or KL). Default 
 parser.add_argument("-nc", "--nocolor", help="Disable colored output", action="store_true")
 parser.add_argument("-tx", "--tax_breakdown", help="Display taxes breakdown", action="store_true")
 parser.add_argument("-cp", "--cabin_plan", help="Display cabin plans links", action="store_true")
+parser.add_argument("-cb", "--cabin", help=f"cabin (ECONOMY or PREMIUM or BUSINESS or FIRST). Default is {default_cabin}.", choices=["ECONOMY","PREMIUM","BUSINESS","FIRST"])
 args = parser.parse_args()
 
 if args.load_from and (args.orig or args.dest or args.odate or args.rdate):
@@ -327,7 +346,11 @@ else:
     airline = args.airline.upper()
   else:
     airline = default_airline
-  mydict = post_request(origin=args.orig.upper(), destination=args.dest.upper(), date_voyage_aller=args.odate, date_voyage_retour=args.rdate, airline=airline)
+  if args.cabin:
+    cabin = args.cabin.upper()
+  else:
+    cabin = default_cabin
+  mydict = post_request(origin=args.orig.upper(), destination=args.dest.upper(), date_voyage_aller=args.odate, date_voyage_retour=args.rdate, airline=airline, cabin=cabin)
   if args.save_to:
     save_data_to_file(mydict, args.save_to)
 
