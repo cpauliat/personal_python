@@ -18,3 +18,5 @@ List cheapest_flight rom an origin airport to destination airport on a range of 
 ![example1](examples/post_available_offers.example1.png)
 
 ![example2](examples/post_lowest_fare_offers.example1.png)
+
+![example2](examples/post_lowest_fare_offers.example2.png)
