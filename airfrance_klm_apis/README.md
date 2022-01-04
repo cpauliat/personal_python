@@ -12,3 +12,7 @@ List cheapest_flight rom an origin airport to destination airport on a range of 
 
 - register for free at https://docs.airfranceklm.com/docs/read/opendata/offers to get your API key
 - modify the script to put your own API key
+
+## EXAMPLES:
+
+![example1](examples/post_available_offers.example1.png)
