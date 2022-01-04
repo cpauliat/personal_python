@@ -277,10 +277,10 @@ if args.load_from:
   mydict = load_data_from_file(args.load_from)
 else:
   if args.airline:
-    airline = args.airline
+    airline = args.airline.upper()
   else:
     airline = default_airline
-  mydict = post_request(origin=args.orig, destination=args.dest, date_voyage_aller=args.odate, date_voyage_retour=args.rdate, airline=airline)
+  mydict = post_request(origin=args.orig.upper(), destination=args.dest.upper(), date_voyage_aller=args.odate, date_voyage_retour=args.rdate, airline=airline)
   if args.save_to:
     save_data_to_file(mydict, args.save_to)
 

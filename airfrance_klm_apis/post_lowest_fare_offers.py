@@ -163,12 +163,12 @@ def display_1d_table ():
   global highest_dates
 
   if args.airline:
-    airline = args.airline
+    airline = args.airline.upper()
   else:
     airline = default_airline
 
   if args.cabin:
-    cabin = args.cabin
+    cabin = args.cabin.upper()
   else:
     cabin = default_cabin
 
@@ -185,7 +185,7 @@ def display_1d_table ():
   prices = {}
   for odate in range_date(args.odate1, args.odate2):
     for rdate in range_date(args.rdate1, args.rdate2):
-      mydict = post_request(origin=args.orig, destination=args.dest, date_voyage_aller=odate, date_voyage_retour=rdate, airline=airline, cabin=cabin)
+      mydict = post_request(origin=args.orig.upper(), destination=args.dest.upper(), date_voyage_aller=odate, date_voyage_retour=rdate, airline=airline, cabin=cabin)
       key = f"{odate}_{rdate}"
       try:
         total_price = mydict["itineraries"][0]["flightProducts"][0]["price"]["totalPrice"]
