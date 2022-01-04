@@ -220,32 +220,36 @@ def display_formatted_data(mydict):
         print (COLOR_NORMAL)
 
   except:
-    # No flight on these dates
+    # No flight available
     print ("No outbound or return flight available !")
 
 # ---- Display minimal data 
 def display_minimal_data(mydict):
   num_iti = 0
-  itineraries = mydict["itineraries"]
-  for itinerary in itineraries:
-    num_iti += 1
-    price       = itinerary["flightProducts"][0]["price"]["totalPrice"]
-    currency    = itinerary["flightProducts"][0]["price"]["currency"]
-    connections = itinerary["connections"]
-  
-    print (f"Itinerary {num_iti:3d} : Price = {price:7.2f} {currency}      ",end="")
-    num_con = 0
-    for connection in connections:
-      price_connection = itinerary["flightProducts"][0]["connections"][num_con]["price"]["totalPrice"]
-      segments         = connection["segments"]
-      connection_name  = segments[0]['departureDateTime']
-      num_con += 1
+  try:
+    itineraries = mydict["itineraries"]
+    for itinerary in itineraries:
+      num_iti += 1
+      price       = itinerary["flightProducts"][0]["price"]["totalPrice"]
+      currency    = itinerary["flightProducts"][0]["price"]["currency"]
+      connections = itinerary["connections"]
+    
+      print (f"Itinerary {num_iti:3d} : Price = {price:7.2f} {currency}      ",end="")
+      num_con = 0
+      for connection in connections:
+        price_connection = itinerary["flightProducts"][0]["connections"][num_con]["price"]["totalPrice"]
+        segments         = connection["segments"]
+        connection_name  = segments[0]['departureDateTime']
+        num_con += 1
 
-      for segment in segments:
-        connection_name = connection_name + "-" + segment['marketingFlight']['carrier']['code'] + segment['marketingFlight']['number']
+        for segment in segments:
+          connection_name = connection_name + "-" + segment['marketingFlight']['carrier']['code'] + segment['marketingFlight']['number']
 
-      print (f"{connection_name:41s}: {price_connection:7.2f} {currency}      ", end="")
-    print ("")
+        print (f"{connection_name:41s}: {price_connection:7.2f} {currency}      ", end="")
+      print ("")
+  except:
+    # No flight available
+    print ("No outbound or return flight available !")
 
 # ========== Main
 
