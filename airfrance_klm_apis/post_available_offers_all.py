@@ -24,6 +24,8 @@ import argparse
 my_api_key          = "xxxxxxxxxxxx"     # register for free at https://docs.airfranceklm.com/docs/read/opendata/offers to get your API key
 default_cabin       = "ECONOMY"          # Can contain ECONOMY or PREMIUM or BUSINESS or FIRST or ALL
 default_airline     = "AF"               # AF or KL
+lowest_price        = 9999
+highest_price       = 0
 
 # ---------- Colors for output
 # see https://misc.flogisoft.com/bash/tip_colors_and_formatting to customize
@@ -160,6 +162,22 @@ def display_tax_breakdown(url):
 def display_raw_data(mydict):
   print (json.dumps(mydict, indent=4, sort_keys=False))
 
+# ---- Get lowest and highest prices
+def get_lowest_and_highest_prices(mydict):
+  global lowest_price
+  global highest_price
+
+  try:
+    itineraries = mydict["itineraries"]
+    for itinerary in itineraries:
+      price       = itinerary["flightProducts"][0]["price"]["totalPrice"]
+      if price < lowest_price: 
+        lowest_price = price
+      if price > highest_price: 
+        highest_price = price
+  except:
+    pass
+
 # ---- Display only relevant data in formatted output
 def display_formatted_data(mydict):
   num_iti = 0
@@ -170,8 +188,15 @@ def display_formatted_data(mydict):
       price       = itinerary["flightProducts"][0]["price"]["totalPrice"]
       currency    = itinerary["flightProducts"][0]["price"]["currency"]
       connections = itinerary["connections"]
-    
-      print ("==================== "+COLOR_ITINERARY+f"Itinerary {num_iti}"+COLOR_NORMAL+" : Price = "+COLOR_PRICE1+f"{price:.2f} {currency}"+COLOR_NORMAL)
+
+      print ("==================== "+COLOR_ITINERARY+f"Itinerary {num_iti}"+COLOR_NORMAL+" : Price = "+COLOR_PRICE1+f"{price:.2f} {currency}  ", end="")
+      if price == lowest_price:
+        print (COLOR_GREEN+" ======== LOWEST PRICE ========")
+      elif price == highest_price:
+        print (COLOR_RED+" ======== HIGHEST PRICE ========")
+      else:
+        print (COLOR_NORMAL)
+
       num_con = 0
       for connection in connections:
         price_connection = itinerary["flightProducts"][0]["connections"][num_con]["price"]["totalPrice"]
@@ -234,7 +259,14 @@ def display_minimal_data(mydict):
       currency    = itinerary["flightProducts"][0]["price"]["currency"]
       connections = itinerary["connections"]
     
-      print (f"Itinerary {num_iti:3d} : Price = {price:7.2f} {currency}      ",end="")
+      if price == lowest_price:
+        COLOR = COLOR_GREEN
+      elif price == highest_price:
+        COLOR = COLOR_RED
+      else:
+        COLOR = COLOR_NORMAL
+
+      print (COLOR+f"Itinerary {num_iti:3d} : Price = {price:7.2f} {currency}      ",end="")
       num_con = 0
       for connection in connections:
         price_connection = itinerary["flightProducts"][0]["connections"][num_con]["price"]["totalPrice"]
@@ -246,7 +278,14 @@ def display_minimal_data(mydict):
           connection_name = connection_name + "-" + segment['marketingFlight']['carrier']['code'] + segment['marketingFlight']['number']
 
         print (f"{connection_name:41s}: {price_connection:7.2f} {currency}      ", end="")
-      print ("")
+
+      if price == lowest_price:
+        print ("LOWEST PRICE")
+      elif price == highest_price:
+        print ("HIGHEST PRICE")
+      else:
+        print (COLOR_NORMAL)
+
   except:
     # No flight available
     print ("No outbound or return flight available !")
@@ -273,8 +312,12 @@ args = parser.parse_args()
 
 if args.load_from and (args.orig or args.dest or args.odate or args.rdate):
   parser.error("-lf/--load_from cannot be used with -o/--orig, -d/--dest, -od/--odate or -rd/--rdate !")
+
 if args.load_from == None and (args.orig == None or args.dest == None or args.odate == None or args.rdate == None):
   parser.error("Arguments -o/--orig, -d/--dest, -od/--odate and -rd/--rdate are mandatory if -lf/--load_form not provided !")
+
+if args.nocolor:
+  disable_colored_output()
 
 # ---- get data from live API request or from saved file
 if args.load_from:
@@ -289,8 +332,7 @@ else:
     save_data_to_file(mydict, args.save_to)
 
 # ---- display data with selected format
-if args.nocolor:
-  disable_colored_output()
+get_lowest_and_highest_prices(mydict)
 
 if args.raw:
   display_raw_data(mydict)
