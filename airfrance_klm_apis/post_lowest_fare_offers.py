@@ -178,7 +178,9 @@ def display_1d_table ():
   titre4 = "fare"
   titre5 = "taxes"
   titre6 = "surcharges"
-  print (f"{titre1:12s} {titre2:12s} {titre3:12s} {titre4:12s} {titre5:12s} {titre6:12s}")
+
+  if args.verbose:
+    print (f"{titre1:12s} {titre2:12s} {titre3:12s} {titre4:12s} {titre5:12s} {titre6:12s}")
 
   prices = {}
   for odate in range_date(args.odate1, args.odate2):
@@ -191,7 +193,8 @@ def display_1d_table ():
         fare        = mydict["itineraries"][0]["flightProducts"][0]["price"]["pricePerPassengerTypes"][0]["fare"]
         taxes       = mydict["itineraries"][0]["flightProducts"][0]["price"]["pricePerPassengerTypes"][0]["taxes"]
         surcharges  = mydict["itineraries"][0]["flightProducts"][0]["price"]["pricePerPassengerTypes"][0]["surcharges"][0]["amount"]
-        print (f"{odate:12s} {rdate:12s} {total_price:9.2f}    {fare:7.2f}      {taxes:7.2f}      {surcharges:7.2f}")
+        if args.verbose:
+          print (f"{odate:12s} {rdate:12s} {total_price:9.2f}    {fare:7.2f}      {taxes:7.2f}      {surcharges:7.2f}")
 
         # store prices in a dictionary for the 2d table later
         prices[key] = total_price
@@ -210,7 +213,8 @@ def display_1d_table ():
         if total_price == highest_price:
           highest_dates.append(key)      
       except:
-        print (f"{odate:12s} {rdate:12s} "+COLOR_NO_FLIGHT+"NO-FLIGHT"+COLOR_NORMAL)
+        if args.verbose:
+          print (f"{odate:12s} {rdate:12s} "+COLOR_NO_FLIGHT+"NO-FLIGHT"+COLOR_NORMAL)
         # store prices in a dictionary for the 2d table later
         prices[key] = "N/A"
 
@@ -268,13 +272,14 @@ parser.add_argument("-od2", "--odate2", help="maximum date for outward flight (Y
 parser.add_argument("-rd1", "--rdate1", help="minimun date for return flight (YYYY-MM-DD)", required=True)
 parser.add_argument("-rd2", "--rdate2", help="maximum date for return flight (YYYY-MM-DD)", required=True)
 parser.add_argument("-al", "--airline", help=f"airline code (AF or KL). Default is {default_airline}.", choices=["AF","KL"])
-parser.add_argument("-nc", "--nocolor", help="Disable colored output", action="store_true")
+parser.add_argument("-nc", "--no_color", help="Disable colored output", action="store_true")
+parser.add_argument("-v", "--verbose", help="Displays prices details", action="store_true")
 parser.add_argument("-cb", "--cabin", help=f"cabin (ECONOMY or PREMIUM or BUSINESS or FIRST). Default is {default_cabin}.", choices=["ECONOMY","PREMIUM","BUSINESS","FIRST"])
 parser.add_argument("-sf", "--save_to", help="write raw data to file")
 args = parser.parse_args()
 
 # ---- look for lowest fare for each combination of dates for outward and return flights
-if args.nocolor:
+if args.no_color:
   disable_colored_output()
 
 display_1d_table()

@@ -110,7 +110,6 @@ def post_request(origin, destination, date_voyage_aller, date_voyage_retour, air
     'AFKL-TRAVEL-Country': 'FR',
     'api-key': my_api_key,
   }
-#    'Cookie': 'TS018c59be=0191981a55f1065e2b40d522060a260683f26004493efd7420e7badf5a2baa04f1def875fe8b579486a1db90414bcada4b5697c68e'
 
   response = requests.request("POST", url, headers=headers, data=payload)
   mydict   = json.loads(response.text)
@@ -164,60 +163,65 @@ def display_raw_data(mydict):
 # ---- Display only relevant data in formatted output
 def display_formatted_data(mydict):
   num_iti = 0
-  itineraries = mydict["itineraries"]
-  for itinerary in itineraries:
-    num_iti += 1
-    price       = itinerary["flightProducts"][0]["price"]["totalPrice"]
-    currency    = itinerary["flightProducts"][0]["price"]["currency"]
-    connections = itinerary["connections"]
-  
-    print ("==================== "+COLOR_ITINERARY+f"Itinerary {num_iti}"+COLOR_NORMAL+" : Price = "+COLOR_PRICE1+f"{price:.2f} {currency}"+COLOR_NORMAL)
-    num_con = 0
-    for connection in connections:
-      price_connection = itinerary["flightProducts"][0]["connections"][num_con]["price"]["totalPrice"]
-      num_con += 1
-      print (COLOR_NORMAL)
-      print ("---------- "+COLOR_ITINERARY+f"connection {num_con}"+COLOR_NORMAL+" : price = "+COLOR_PRICE2+f"{price_connection:.2f} {currency}"+COLOR_NORMAL)
-      segments = connection["segments"]
+  try:
+    itineraries = mydict["itineraries"]
+    for itinerary in itineraries:
+      num_iti += 1
+      price       = itinerary["flightProducts"][0]["price"]["totalPrice"]
+      currency    = itinerary["flightProducts"][0]["price"]["currency"]
+      connections = itinerary["connections"]
+    
+      print ("==================== "+COLOR_ITINERARY+f"Itinerary {num_iti}"+COLOR_NORMAL+" : Price = "+COLOR_PRICE1+f"{price:.2f} {currency}"+COLOR_NORMAL)
+      num_con = 0
+      for connection in connections:
+        price_connection = itinerary["flightProducts"][0]["connections"][num_con]["price"]["totalPrice"]
+        num_con += 1
+        print (COLOR_NORMAL)
+        print ("---------- "+COLOR_ITINERARY+f"connection {num_con}"+COLOR_NORMAL+" : price = "+COLOR_PRICE2+f"{price_connection:.2f} {currency}"+COLOR_NORMAL)
+        segments = connection["segments"]
 
-      for segment in segments:
-        line1 = COLOR_TITLE+"Flight   : "+COLOR_DATA+f"{segment['marketingFlight']['carrier']['code']}{segment['marketingFlight']['number']}"
-        print (f"{line1:50s} ",end="")
-      print ("")
-
-      for segment in segments:
-        line2 = COLOR_TITLE+"Departure: "+COLOR_DATA+f"{segment['origin']['code']} at {segment['departureDateTime']}"
-        print (f"{line2:50s} ",end="")
-      print ("")
-
-      for segment in segments:
-        line3 = COLOR_TITLE+"Arrival  : "+COLOR_DATA+f"{segment['destination']['code']} at {segment['arrivalDateTime']}"
-        print (f"{line3:50s} ",end="")
-      print ("")
-
-      for segment in segments:
-        line4 = COLOR_TITLE+"Aircraft : "+COLOR_DATA+f"{segment['marketingFlight']['operatingFlight']['equipmentType']['name']}"
-        print (f"{line4:50s} ",end="")
-      print ("")
-
-      # If requested, display links for cabin plans
-      if args.cabin_plan:
-        print ("")
         for segment in segments:
-          try:
-            flight_number = f"{segment['marketingFlight']['carrier']['code']}{segment['marketingFlight']['number']}"
-            link          = f"{segment['marketingFlight']['operatingFlight']['equipmentType']['_links']['information']['href']}"
-            print (COLOR_TITLE + f"Cabin plan {flight_number}: "+COLOR_LINKS+f"{link}")
-          except:
-            pass
+          line1 = COLOR_TITLE+"Flight   : "+COLOR_DATA+f"{segment['marketingFlight']['carrier']['code']}{segment['marketingFlight']['number']}"
+          print (f"{line1:50s} ",end="")
+        print ("")
 
-    print (COLOR_NORMAL)
+        for segment in segments:
+          line2 = COLOR_TITLE+"Departure: "+COLOR_DATA+f"{segment['origin']['code']} at {segment['departureDateTime']}"
+          print (f"{line2:50s} ",end="")
+        print ("")
 
-    # If requested, display tax breakdown for the itinerary
-    if args.tax_breakdown:
-      offer_link = itinerary["flightProducts"][0]["_links"]["taxBreakdown"]["href"]
-      display_tax_breakdown(offer_link)
+        for segment in segments:
+          line3 = COLOR_TITLE+"Arrival  : "+COLOR_DATA+f"{segment['destination']['code']} at {segment['arrivalDateTime']}"
+          print (f"{line3:50s} ",end="")
+        print ("")
+
+        for segment in segments:
+          line4 = COLOR_TITLE+"Aircraft : "+COLOR_DATA+f"{segment['marketingFlight']['operatingFlight']['equipmentType']['name']}"
+          print (f"{line4:50s} ",end="")
+        print ("")
+
+        # If requested, display links for cabin plans
+        if args.cabin_plan:
+          print ("")
+          for segment in segments:
+            try:
+              flight_number = f"{segment['marketingFlight']['carrier']['code']}{segment['marketingFlight']['number']}"
+              link          = f"{segment['marketingFlight']['operatingFlight']['equipmentType']['_links']['information']['href']}"
+              print (COLOR_TITLE + f"Cabin plan {flight_number}: "+COLOR_LINKS+f"{link}")
+            except:
+              pass
+
       print (COLOR_NORMAL)
+
+      # If requested, display tax breakdown for the itinerary
+      if args.tax_breakdown:
+        offer_link = itinerary["flightProducts"][0]["_links"]["taxBreakdown"]["href"]
+        display_tax_breakdown(offer_link)
+        print (COLOR_NORMAL)
+
+  except:
+    # No flight on these dates
+    print ("No outbound or return flight available !")
 
 # ---- Display minimal data 
 def display_minimal_data(mydict):
