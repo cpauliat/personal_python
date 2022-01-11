@@ -398,7 +398,7 @@ def display_csv_data(mydict):
       print (f"{current_date},{itinerary_name},{itinerary_price:.2f},{connection_name[0]},{connection_price[0]:.2f},{connection_name[1]},{connection_price[1]:.2f}")
   except:
     # No flight available
-    print ("No outbound or return flight available !")
+    print (f"{current_date},No flight")
 
 # ========== Main
 
