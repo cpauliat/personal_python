@@ -5,13 +5,16 @@
 # to a destination using provided date for outbound flight and return flight
 #
 # Author: Christophe Pauliat
-# Last update: January 4, 2021
 #
 # Prereq: register as a developer at https://docs.airfranceklm.com and get your api key
 #
 # API docs: 
 # - https://docs.airfranceklm.com/docs/read/opendata/offers/POST_availableoffers_v1
 # - https://docs.airfranceklm.com/docs/read/opendata/offers/Errors_Code
+#
+# Versions:
+#     2022-01-04: initial version
+#     2022-01-11: Add option --csv
 # ---------------------------------------------------------------------------------------
 
 # ---------- imports
@@ -19,6 +22,7 @@ import requests
 import json
 import sys
 import argparse
+from datetime import datetime
 
 # ---------- Variables
 my_api_key          = "xxxxxxxxxxxx"     # register for free at https://docs.airfranceklm.com/docs/read/opendata/offers to get your API key
@@ -366,6 +370,36 @@ def display_minimal_data(mydict):
     # No flight available
     print ("No outbound or return flight available !")
 
+# ---- Display CSV data 
+def display_csv_data(mydict):
+  current_date = datetime.today().strftime('%Y-%m-%d')
+  try:
+    itineraries = mydict["itineraries"]
+    for itinerary in itineraries:
+      itinerary_price = itinerary["flightProducts"][0]["price"]["totalPrice"]
+      connections     = itinerary["connections"]
+  
+      itinerary_name = ""
+      connection_name  = []
+      connection_price = []
+      num_con = 0
+      for connection in connections:
+        connection_price.append(itinerary["flightProducts"][0]["connections"][num_con]["price"]["totalPrice"])
+        connection_array = []
+        num_con += 1
+
+        for segment in connection["segments"]:
+          connection_array.append(segment['marketingFlight']['carrier']['code'] + segment['marketingFlight']['number'])
+
+        connection_name.append("-".join(connection_array))
+      
+      itinerary_name = f"{connection_name[0]}___{connection_name[1]}"
+
+      print (f"{current_date},{itinerary_name},{itinerary_price:.2f},{connection_name[0]},{connection_price[0]:.2f},{connection_name[1]},{connection_price[1]:.2f}")
+  except:
+    # No flight available
+    print ("No outbound or return flight available !")
+
 # ========== Main
 
 # ---- parse arguments
@@ -373,6 +407,7 @@ parser = argparse.ArgumentParser(description = "Get Flights offers from Air-Fran
 group1  = parser.add_mutually_exclusive_group()
 group1.add_argument("-r", "--raw", help="displays raw formatted data (JSON)", action="store_true")
 group1.add_argument("-s", "--short", help="displays minimal data (short)", action="store_true")
+group1.add_argument("-c", "--csv", help="displays minimal data in CSV format", action="store_true")
 group2  = parser.add_mutually_exclusive_group()
 group2.add_argument("-lf", "--load_from", help="read data from file instead of API request")
 group2.add_argument("-sf", "--save_to", help="write raw data to file")
@@ -419,6 +454,8 @@ if args.raw:
   display_raw_data(mydict)
 elif args.short:
   display_minimal_data(mydict)
+elif args.csv:
+  display_csv_data(mydict)
 else:
   display_formatted_data(mydict)
 
