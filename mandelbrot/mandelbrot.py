@@ -6,12 +6,16 @@
 # Il est possible de sauver l'image courante dans un fichier image .png
 #
 # Auteur : Christophe Pauliat
-# Date   : Avril 2021
+# 
+# Versions:
+#     2021/04/15: Initial version
+#     2021/11/23: Using NumPy arrays to speed up computing
 # --------------------------------------------------------------------------------------------------------------------------
 
 
 # ---------- modules
-import tkinter 
+import tkinter
+from tkinter.constants import ANCHOR 
 import tkinter.font
 import tkinter.messagebox
 import tkinter.ttk
@@ -21,15 +25,15 @@ import cmath
 import time
 import random
 import numpy as np
-from PIL import Image
-from PIL import ImageColor
+from PIL import Image, ImageTk, ImageColor
+from matplotlib import cm
 
 # ---------- variables
 hauteur_canvas, xmin_initial, xmax_initial, ymin_initial, ymax_initial = 800, -2.2, 0.8, -1.3, 1.3
 #hauteur_canvas, xmin_initial, xmax_initial, ymin_initial, ymax_initial = 500, -1.20, -1.18, 0.29, 0.31
 p = p_initial = 2                        # puissance p dans la formule: zn+1 = zn ^ p + c
 rayon = rayon_initial = 2                # valeur du module pour laquelle on arrête les iterations
-max_iterations = max_iterations_initial = 100    # nb max d'iterations
+max_iterations = max_iterations_initial = 20     # nb max d'iterations
 
 couleur_fond       = "#4040D0"
 couleur_mandelbrot = "black"
@@ -104,47 +108,12 @@ def get_color_from_iteration(nb_iterations):
 #                color_index2 = int(nb_colors * (math.exp(4 * n / max_iterations) - 1) / (math.exp(4) - 1))
         return colors [color_index] 
 
-# ---- Calculs
-# Suite: zn+1 = zn ^ p + c
-def znp1(zn, c):
-    z = zn
-    for i in range(p - 1):
-        z = z * zn
-    z = z + c
-    return z
-
-def mandelbrot_iterations_basic(x,y):
-    zn = 0
-    c  = x + y * 1j
-    n  = 0
-    while (n < max_iterations) and (abs(zn) <= 2): # rayon instead of 2
-        zn = znp1 (zn, c)
-        n += 1
-    return n
-
-def mandelbrot_iterations_periodicity_checking(x,y):
-    zn = 0
-    c  = x + y * 1j
-    n  = 0
-    z_old = 0
-    while (n < max_iterations) and (abs(zn) <= 2): # rayon instead of 2
-        zn = znp1 (zn, c)
-        n += 1
-
-        if abs(zn - z_old) < 0.01:
-            n = max_iterations
-            break
-
-        if n % 20 == 0:
-            z_old = zn
-
-    return n
-
-def dessine_mandelbrot_algo_basic(precision):
+def calcule_et_affiche():
     global calcul_en_cours
     global selected_rectangle
     global canvas_dessin
     global myarray
+    global img
 
     print (f"Calcul algo basic démarré")
     calcul_en_cours = True
@@ -154,163 +123,46 @@ def dessine_mandelbrot_algo_basic(precision):
 
     t1 = time.time()
     t2 = t1
-    for xe in range(0,largeur_canvas,precision):
-        for ye in range(0,hauteur_canvas,precision):
-            x = xecran_to_x(xe)
-            y = yecran_to_y(ye)
-            color = get_color_from_iteration(mandelbrot_iterations_periodicity_checking(x,y))
-            canvas_dessin.create_rectangle(xe, ye, xe+precision, ye+precision, outline = color, fill = color)
-            rgb = ImageColor.getcolor(color,"RGB")
-            myarray[ye][xe][0] =  rgb[0]
-            myarray[ye][xe][1] =  rgb[1]
-            myarray[ye][xe][2] =  rgb[2]
-        t3 = time.time()
-        # toutes les secondes, on refresh l'écran
-        if t3 - t2 > 1:
-            t2 = t3
-            canvas_dessin.update()
-            pct = int(xe / largeur_canvas * 100)
-            calcul_en_cours_tv.set(f"CALCUL EN COURS : {pct} %")
-            calcul_en_cours_label.update()
+
+    # cree un numpy array m_nb_iter contenant le nombre d'iterations pour chaque point x,y
+    x = np.linspace(xmin, xmax, largeur_canvas+1)
+    y = np.linspace(ymin, ymax, hauteur_canvas+1)
+
+    ma, mb = np.meshgrid(x, y)
+    mc = ma + mb*1j
+    mz = np.zeros_like(mc)
+    m_nb_iter = max_iterations + np.zeros(mz.shape, dtype=int)
+
+    for i in range(max_iterations):
+        mz = mz**2 + mc
+        diverge = abs(mz) > rayon                    
+        div_now = diverge & (m_nb_iter == max_iterations) 
+        m_nb_iter[div_now] = i                         
+        mz[diverge] = rayon                                
+
+    t3 = time.time()
+    print (f"Calcul algo basic terminé t3: durée = {t3 - t1:.2f} s.")
+
+    # Ensuite, cree et affiche une image a partir de cet array
+    color_map = cm.rainbow  # cm.gist_earth 
+    myarray = np.uint8(color_map(m_nb_iter / max_iterations)*255)
+    img =  ImageTk.PhotoImage(image=Image.fromarray(myarray))
+    canvas_dessin.create_image(0,0, anchor="nw", image=img)
+    canvas_dessin.update()
 
     t4 = time.time()
-    print (f"Calcul algo basic terminé: durée = {t4 - t1:.2f} s.")
+    print (f"Affichage algo basic terminé t4: durée = {t4 - t3:.2f} s.")
 
     calcul_en_cours_tv.set("CALCUL EN COURS : 100 %")
     calcul_en_cours_label.update()
 
-    canvas_dessin.update()
+    #img = _photo_image(myarray)
+    #canvas_dessin.create_image(largeur_canvas, hauteur_canvas, image=img)
+    # canvas_dessin.update()
 
     calcul_en_cours = False
     calcul_en_cours_tv.set("")
     enable_buttons()
-
-# ---- Advanced algorithm   DOES NOT WORK YET
-def dessine_mandelbrot_algo_advanced(precision):
-    global calcul_en_cours
-    global selected_rectangle
-    global canvas_dessin
-    global myarray
-
-    print (f"Calcul basic démarré")
-    calcul_en_cours = True
-    disable_buttons()
-    calcul_en_cours_tv.set("CALCUL EN COURS : 0 %")
-    fenetre.update()
-
-    t1 = time.time()
-    t2 = t1
-
-    # Initialisation a partir du point de reference Z0 (nombre complexe) au centre du canvas
-    Z0 = xmin + (xmax - xmin) / 2 + 1j * (ymin + (ymax - ymin) / 2)
-    Zn = Z0
-
-    An = 1
-    Bn = Cn = 0
-    Zn_array = [ Zn ]
-    An_array = [ An ]
-    Bn_array = [ Bn ]
-    Cn_array = [ Cn ]
-
-    for n in range(max_iterations):
-        Anp1 = 2 * Zn * An + 1 
-        Bnp1 = 2 * Zn * Bn + An * An
-        Cnp1 = 2 * Zn * Cn + 2 * An * Bn
-        Znp1 = Zn * Zn + Z0
-        An_array.append(Anp1)
-        Bn_array.append(Bnp1)
-        Cn_array.append(Cnp1)
-        Zn_array.append(Znp1)
-        An = Anp1
-        Bn = Bnp1
-        Cn = Cnp1
-        Zn = Znp1
-
-        print ("An = ",An_array)
-        print ("Bn = ",Bn_array)
-        print ("Cn = ",Cn_array)
-
-    # On traite les points W0 de l'ecran avec la formule
-    # Wn - Zn = DN = An * D0 + BN * D0^2 + CN * D0^3 + negligeable(D0^4)
-    # D0 = W0 - Z0  
-    for xe in range(0,largeur_canvas,precision):
-        for ye in range(0,hauteur_canvas,precision):
-            x = xecran_to_x(xe)
-            y = yecran_to_y(ye)
-            W0 = x + 1j * y
-
-            D0 = W0 - Z0
-            D02 = D0 * D0           # D0^2
-            D03 = D0 * D02          # D0^3
-            Wn = W0
-
-            
-            n = 0
-            while (n < max_iterations) and (abs(Wn) <= rayon):
-                Zn = Zn_array[n]
-                An = An_array[n]
-                Bn = Bn_array[n]
-                Cn = Cn_array[n]
-                Wn = Zn + An * D0 + Bn * D02 + Cn * D03
-                n += 1
-                if (x == -1.186) and (y == 0.302):
-                    print (f"  DEBUG: x = {x} y={y} n={n} abs(Wn)={abs(Wn)}")
-
-            if (x == -1.186) and (y == 0.302):
-                print (f"DEBUG: x = {x} y={y} n={n} abs(Wn)={abs(Wn)} abs(W0)={abs(W0)} abs(D0)={abs(D0)}")
-
-            if n == max_iterations:
-                color = couleur_mandelbrot
-            else:
-                color = colors[int(n / max_iterations * nb_colors)]
-
-            canvas_dessin.create_rectangle(xe, ye, xe+precision, ye+precision, outline = color, fill = color)
-            rgb = ImageColor.getcolor(color,"RGB")
-            myarray[ye][xe][0] =  rgb[0]
-            myarray[ye][xe][1] =  rgb[1]
-            myarray[ye][xe][2] =  rgb[2]
-
-        t3 = time.time()
-        # toutes les secondes, on refresh l'écran
-        if t3 - t2 > 1:
-            t2 = t3
-            canvas_dessin.update()
-            pct = int(xe / largeur_canvas * 100)
-            calcul_en_cours_tv.set(f"CALCUL EN COURS : {pct} %")
-            calcul_en_cours_label.update()
-    #
-    t4 = time.time()
-    print (f"Calcul basic terminé: durée = {t4 - t1:.2f} s.")
-
-    calcul_en_cours_tv.set("CALCUL EN COURS : 100 %")
-    calcul_en_cours_label.update()
-
-    canvas_dessin.update()
-
-    calcul_en_cours = False
-    calcul_en_cours_tv.set("")
-    enable_buttons()
-
-def calcule_rapide():
-    global myarray
-
-    # on cree un Numpy Array pour contenir l'image calculee
-    myarray = np.zeros(shape=(hauteur_canvas,largeur_canvas,3), dtype=np.uint8)
-    dessine_mandelbrot_algo_basic(precision_faible)
-
-    # apres le calcul rapide, on peut activer le bouton calcul precis
-    cc_precis_button["state"] = tkinter.NORMAL
-
-def calcule_precis():
-    # un fois le calcul precis démarré, on peut desactiver le bouton calcul precis
-    cc_precis_button["state"] = tkinter.DISABLED
-    
-    # calcul et affichage
-    dessine_mandelbrot_algo_basic(1)
-    #dessine_mandelbrot_algo_advanced(5)
-
-    # on peut sauver une image seulement apres un calcul précis
-    save_button["state"] = tkinter.NORMAL
 
 # ---- divers
 def efface_et_resize_canvas():
@@ -429,7 +281,7 @@ def select_area_end(event):
         largeur_canvas = int (hauteur_canvas * (xmax - xmin) / (ymax - ymin))   # on calcule la largeur pour conserver le ratio 
         zoom_display_area_coords()
         efface_et_resize_canvas()
-        calcule_rapide()
+        calcule_et_affiche()
 
 # ---- gestion des parametres utilisés pour les calculs
 def zoom_display_area_coords():
@@ -453,7 +305,7 @@ def params_reset():
     largeur_canvas = int (hauteur_canvas * (xmax - xmin) / (ymax - ymin))   # on calcule la largeur pour conserver le ratio 
     zoom_display_area_coords()
     efface_et_resize_canvas()
-    calcule_rapide()
+    calcule_et_affiche()
 
 def params_precedents():
     global xmin
@@ -472,7 +324,7 @@ def params_precedents():
         zoom_display_area_coords()
         largeur_canvas = int (hauteur_canvas * (xmax - xmin) / (ymax - ymin))   # on calcule la largeur pour conserver le ratio 
         efface_et_resize_canvas()
-        calcule_rapide()
+        calcule_et_affiche()
 
 def valide_params():
     global xmin
@@ -507,7 +359,7 @@ def valide_params():
     p, max_iterations             = p_tmp, max_iterations_tmp
     largeur_canvas = int (hauteur_canvas * (xmax - xmin) / (ymax - ymin))   # on calcule la largeur pour conserver le ratio 
     efface_et_resize_canvas()
-    calcule_rapide()
+    calcule_et_affiche()
 
 # ---- Sauvegarde de l'image cree avec calcul precis dans un fichier .png
 def sauver_png():
@@ -587,14 +439,13 @@ if __name__ == '__main__':
     for i in range(len(params_names)):
         tkinter.Label (params_frame, anchor = tkinter.W, font = font_cn16, text = params_names[i], bg = couleur_frame, fg = couleur_texte).grid(sticky = tkinter.N+tkinter.W, column=0, row=i, pady = 5)
         tkinter.Entry (params_frame, justify = tkinter.LEFT, font = font_cn16, width = 26 - len(params_names[i]), bg = couleur_frame, fg = couleur_texte, relief = tkinter.FLAT, highlightcolor = "red", textvariable = params_tv[i]).grid(sticky = tkinter.N+tkinter.W+tkinter.E, column=1, row=i, pady = 5)
-    valide_params_btn     = tkinter.Button(frame_controle, text = "VALIDE PARAMETRES", font = font_ar18, height = 2, fg = "green", command = valide_params)
-    params_initiaux_btn   = tkinter.Button(frame_controle, text = "PARAMETRES INITIAUX", font = font_ar18, height = 2, fg = "green", command = params_reset)
+    valide_params_btn     = tkinter.Button(frame_controle, text = "VALIDE PARAMETRES",     font = font_ar18, height = 2, fg = "green", command = valide_params)
+    params_initiaux_btn   = tkinter.Button(frame_controle, text = "PARAMETRES INITIAUX",   font = font_ar18, height = 2, fg = "green", command = params_reset)
     params_precedents_btn = tkinter.Button(frame_controle, text = "PARAMETRES PRECEDENTS", font = font_ar18, height = 2, fg = "green", command = params_precedents)
     params_precedents_btn["state"] = tkinter.DISABLED
-    cc_precis_button      = tkinter.Button(frame_controle, text = "CALCUL PRECIS", font = font_ar18, height = 2, fg = "blue", state = tkinter.DISABLED, command = calcule_precis)
     save_quit_frame       = tkinter.Frame (frame_controle, bg = couleur_frame)
-    save_button           = tkinter.Button(save_quit_frame, text = "SAUVER", font = font_ar18, height = 2,  fg = "green", state = tkinter.DISABLED, command = sauver_png)
-    quit_button           = tkinter.Button(save_quit_frame, text = "QUITTER", font = font_ar18, height = 2,  fg = "red", command = quitter)
+    save_button           = tkinter.Button(save_quit_frame, text = "SAUVER",  font = font_ar18, height = 2,  fg = "green", command = sauver_png, state = tkinter.DISABLED)
+    quit_button           = tkinter.Button(save_quit_frame, text = "QUITTER", font = font_ar18, height = 2,  fg = "red",   command = quitter)
     current_pos_label     = tkinter.Label (frame_controle, justify = tkinter.LEFT, font = font_cn16, textvariable = current_pos_tv, bg = couleur_frame, fg = couleur_coords_souris)
     calcul_en_cours_label = tkinter.Label (frame_controle, justify = tkinter.CENTER, font = font_ar20, textvariable = calcul_en_cours_tv, bg = couleur_frame, fg = couleur_calcul_en_cours)
     selected_area_label   = tkinter.Label (frame_controle, justify = tkinter.LEFT, font = font_cn16, textvariable = selected_area_tv, bg = couleur_frame, fg = couleur_selection)
@@ -607,11 +458,10 @@ if __name__ == '__main__':
     formule_label.pack        (side = tkinter.TOP, padx = 20, pady = 10,  fill = tkinter.X)
     separator1.pack           (side = tkinter.TOP, padx = 0,  pady = 5,   fill = tkinter.X)
     params_frame.pack         (side = tkinter.TOP, padx = 20, pady = 0,   fill = tkinter.X)
-    valide_params_btn.pack (side = tkinter.TOP, padx = 20, pady = 10,  fill = tkinter.X)
+    valide_params_btn.pack    (side = tkinter.TOP, padx = 20, pady = 10,  fill = tkinter.X)
     separator1b.pack          (side = tkinter.TOP, padx = 0,  pady = 5,   fill = tkinter.X)
-    params_initiaux_btn.pack         (side = tkinter.TOP, padx = 20, pady = 10,  fill = tkinter.X)
-    params_precedents_btn.pack      (side = tkinter.TOP, padx = 20, pady = 10,  fill = tkinter.X)
-    cc_precis_button.pack     (side = tkinter.TOP, padx = 20, pady = 10,  fill = tkinter.X)
+    params_initiaux_btn.pack  (side = tkinter.TOP, padx = 20, pady = 10,  fill = tkinter.X)
+    params_precedents_btn.pack(side = tkinter.TOP, padx = 20, pady = 10,  fill = tkinter.X)
     save_quit_frame.pack      (side = tkinter.TOP, padx = 10, pady = 10,  fill = tkinter.X)
     save_quit_frame.columnconfigure (0, weight = 1)
     save_quit_frame.columnconfigure (1, weight = 1)
@@ -640,7 +490,7 @@ if __name__ == '__main__':
     canvas_dessin.bind('<ButtonRelease-1>', select_area_end)
 
     # ---- On affiche l'ensemble de Mandelbrot en calcul rapide après n ms
-    fenetre.after (500, calcule_rapide)
+    fenetre.after (500, calcule_et_affiche)
 
     # ---- Boucle de la fenetre graphique
     fenetre.mainloop()
