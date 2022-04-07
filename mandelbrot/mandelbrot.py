@@ -10,6 +10,7 @@
 # Versions:
 #     2021/04/15: Initial version
 #     2021/11/23: Using NumPy arrays to speed up computing
+#     2021/11/23: Fix minor bugs
 # --------------------------------------------------------------------------------------------------------------------------
 
 
@@ -115,7 +116,6 @@ def calcule_et_affiche():
     global myarray
     global img
 
-    print (f"Calcul algo basic démarré")
     calcul_en_cours = True
     disable_buttons()
     calcul_en_cours_tv.set("CALCUL EN COURS : 0 %")
@@ -134,14 +134,14 @@ def calcule_et_affiche():
     m_nb_iter = max_iterations + np.zeros(mz.shape, dtype=int)
 
     for i in range(max_iterations):
-        mz = mz**2 + mc
+        mz = mz**p + mc
         diverge = abs(mz) > rayon                    
         div_now = diverge & (m_nb_iter == max_iterations) 
         m_nb_iter[div_now] = i                         
         mz[diverge] = rayon                                
 
     t3 = time.time()
-    print (f"Calcul algo basic terminé t3: durée = {t3 - t1:.2f} s.")
+    print (f"Calcul terminé : durée = {t3 - t1:.2f} s.")
 
     # Ensuite, cree et affiche une image a partir de cet array
     color_map = cm.rainbow  # cm.gist_earth 
@@ -151,7 +151,7 @@ def calcule_et_affiche():
     canvas_dessin.update()
 
     t4 = time.time()
-    print (f"Affichage algo basic terminé t4: durée = {t4 - t3:.2f} s.")
+    print (f"Affichage terminé t4: durée = {t4 - t3:.2f} s.")
 
     calcul_en_cours_tv.set("CALCUL EN COURS : 100 %")
     calcul_en_cours_label.update()
@@ -289,6 +289,9 @@ def zoom_display_area_coords():
     params_tv[1].set(f"{xmax: .16f}")
     params_tv[2].set(f"{ymin: .16f}")
     params_tv[3].set(f"{ymax: .16f}")
+    params_tv[4].set(f"{rayon}")
+    params_tv[5].set(f"{p}")
+    params_tv[6].set(f"{max_iterations}")
 
 def params_reset():
     global xmin
@@ -410,7 +413,7 @@ if __name__ == '__main__':
     fenetre.resizable(width=False, height=False)    # on empeche le redimensionnement manuel de la fenetre
 
     # ---- frame de controle
-    params_names = [ "Xmin", "Xmax", "Ymin", "Ymax", "Rayon R", "Puissance P", "Itérations"]
+    params_names = [ "Xmin        : ", "Xmax        : ", "Ymin        : ", "Ymax        : ", "Rayon R     : ", "Puissance P : ", "Itérations  : "]
     font_cn16 = tkinter.font.Font(family='Courier new', size=16)
     font_ar16 = tkinter.font.Font(family='Arial', size=16)
     font_ar18 = tkinter.font.Font(family='Arial', size=18)
